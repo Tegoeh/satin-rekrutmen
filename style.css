@@ -85,6 +85,12 @@ body {
     radial-gradient(circle at 90% 80%, rgba(37, 99, 235, 0.05) 0%, transparent 45%);
 }
 
+body.modal-open {
+  overflow: hidden !important;
+  height: 100vh !important;
+  position: relative !important;
+}
+
 .app-container {
   max-width: 1300px;
   margin: 0 auto;
@@ -1438,10 +1444,38 @@ h1, h2, h3, h4 {
     --glass-border: rgba(255, 255, 255, 0.08);
   }
   
-  /* Hilangkan animasi masuk yang membebani rendering di browser mobile */
+  /* Hilangkan animasi masuk yang membebani rendering di browser mobile dan paksa opacity tampil penuh */
   .animate-slide-up {
     animation: none !important;
     transform: none !important;
+    opacity: 1 !important;
+  }
+
+  /* Rombak total navbar menjadi layout grid modern yang responsif dan tampak premium di HP */
+  .dashboard-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-bottom: 16px !important;
+  }
+
+  .tab-btn {
+    padding: 10px 6px !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    width: 100% !important;
+    border-radius: var(--radius-sm) !important;
+    line-height: 1.2 !important;
+  }
+
+  .tab-btn i {
+    font-size: 1.1rem !important;
   }
   
   .welcome-banner {
@@ -1455,30 +1489,33 @@ h1, h2, h3, h4 {
   }
 
   /* Mengaktifkan scroll natural pada modal overlay secara penuh */
-  #ai-dashboard-modal, #detail-modal {
-    display: none !important;
-    opacity: 0;
-    pointer-events: none;
+  .modal-overlay {
+    align-items: flex-start !important; /* Mulai dari atas agar kartu yang panjang bisa discroll */
     overflow-y: auto !important;
     overscroll-behavior: contain !important; /* Mencegah mutlak gulir tembus ke layar belakang di HP */
-    -webkit-overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch !important;
     padding: 16px !important;
+    display: none;
   }
-  
-  #ai-dashboard-modal.active, #detail-modal.active {
-    display: block !important; /* Diubah menjadi block agar bisa discroll ke bawah jika kartunya panjang */
-    opacity: 1;
-    pointer-events: auto;
+
+  .modal-overlay.active {
+    display: flex !important;
+    pointer-events: auto !important;
+  }
+
+  #ai-dashboard-modal, #detail-modal, #ai-password-modal {
+    align-items: flex-start !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   /* Mengubah kartu modal menjadi dokumen blok terpadu di layar HP */
-  #ai-dashboard-modal .modal-card, #detail-modal .modal-card {
+  #ai-dashboard-modal .modal-card, #detail-modal .modal-card, #ai-password-modal .modal-card {
     height: auto !important;
     max-height: none !important;
     margin: 30px auto 60px !important; /* Memberikan ruang scroll atas & bawah agar estetik */
     border-radius: var(--radius-md) !important;
     overflow: visible !important; /* Hapus jepitan visual */
-    display: block !important;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
   }
   

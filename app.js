@@ -675,6 +675,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderUI();
             updateStrukturOrg();
             detailModal.classList.remove('active');
+            document.body.classList.remove('modal-open');
             
             // Show success confirmation
             const alertText = currentSelectedStatus === 'diterima' || currentSelectedStatus === 'diterima-dirubah' ? 
@@ -703,6 +704,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         detailModal.classList.add('active');
+        document.body.classList.add('modal-open');
     };
 
     // --- EVENT HANDLERS ---
@@ -729,9 +731,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Close Modal
-    modalClose.addEventListener('click', () => detailModal.classList.remove('active'));
+    modalClose.addEventListener('click', () => {
+        detailModal.classList.remove('active');
+        document.body.classList.remove('modal-open');
+    });
     detailModal.addEventListener('click', (e) => {
-        if (e.target === detailModal) detailModal.classList.remove('active');
+        if (e.target === detailModal) {
+            detailModal.classList.remove('active');
+            document.body.classList.remove('modal-open');
+        }
     });
 
     // --- LOADING & DISPLAY CONTROLS ---
@@ -1031,18 +1039,31 @@ document.addEventListener('DOMContentLoaded', () => {
         aiPasswordInput.value = '';
         aiPasswordError.classList.add('hidden');
         aiPasswordModal.classList.add('active');
+        document.body.classList.add('modal-open');
         aiPasswordInput.focus();
     };
 
     // Penutupan Modal AI
-    aiPasswordClose.addEventListener('click', () => aiPasswordModal.classList.remove('active'));
+    aiPasswordClose.addEventListener('click', () => {
+        aiPasswordModal.classList.remove('active');
+        document.body.classList.remove('modal-open');
+    });
     aiPasswordModal.addEventListener('click', (e) => {
-        if (e.target === aiPasswordModal) aiPasswordModal.classList.remove('active');
+        if (e.target === aiPasswordModal) {
+            aiPasswordModal.classList.remove('active');
+            document.body.classList.remove('modal-open');
+        }
     });
 
-    aiDashboardClose.addEventListener('click', () => aiDashboardModal.classList.remove('active'));
+    aiDashboardClose.addEventListener('click', () => {
+        aiDashboardModal.classList.remove('active');
+        document.body.classList.remove('modal-open');
+    });
     aiDashboardModal.addEventListener('click', (e) => {
-        if (e.target === aiDashboardModal) aiDashboardModal.classList.remove('active');
+        if (e.target === aiDashboardModal) {
+            aiDashboardModal.classList.remove('active');
+            document.body.classList.remove('modal-open');
+        }
     });
 
     // 3. Verifikasi Kata Sandi Admin (Default: satinbph)
@@ -1072,6 +1093,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resetConsoleOutput();
         
         aiDashboardModal.classList.add('active');
+        document.body.classList.add('modal-open');
     };
 
     const resetConsoleOutput = () => {
