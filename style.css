@@ -1246,6 +1246,7 @@ h1, h2, h3, h4 {
   border-color: rgba(16, 185, 129, 0.35);
   background: rgba(16, 185, 129, 0.03);
   box-shadow: 0 4px 15px rgba(16, 185, 129, 0.05);
+  cursor: pointer;
 }
 
 .struktur-slot-card.filled:hover {

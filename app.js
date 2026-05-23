@@ -955,6 +955,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Delegasi penanganan klik untuk kartu pengurus terpilih di organogram
+    document.querySelectorAll('.struktur-slot-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const h4 = card.querySelector('h4');
+            if (!h4) return;
+            const name = h4.textContent.trim();
+            if (name && name !== 'Belum Terpilih') {
+                const app = applicants.find(a => a.nama === name);
+                if (app) {
+                    openApplicantDetail(app.id);
+                }
+            }
+        });
+    });
+
     // --- APP INITIALIZATION ---
     loadCachedData();
 
