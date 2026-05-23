@@ -1585,17 +1585,19 @@ h1, h2, h3, h4 {
     justify-content: center !important;
   }
   
-  /* Hapus scrollbar ganda di konsol pembacaan teks */
+  /* Konsol pembacaan teks yang sangat luas, lega, dan mantap di HP */
   .console-body {
-    height: auto !important; /* Biar melebar ke bawah secara utuh tanpa melahirkan scrollbar dalam scrollbar */
-    max-height: none !important;
-    overflow: visible !important;
-    padding: 12px !important;
-    font-size: 0.85rem !important;
+    height: 480px !important; /* Memperluas area konsol AI secara signifikan */
+    max-height: 60vh !important; /* Mencegah pecah di layar beresolusi sangat rendah */
+    overflow-y: auto !important; /* Mengembalikan scroll mandiri di dalam kotak konsol */
+    -webkit-overflow-scrolling: touch !important;
+    padding: 16px 12px !important;
+    font-size: 0.88rem !important;
   }
   
   .ai-console-wrapper {
-    overflow: visible !important;
+    overflow: hidden !important; /* Mengembalikan efek sudut membulat konsol */
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
   }
   
   #ai-dashboard-modal .modal-close-btn, 

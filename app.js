@@ -1206,7 +1206,25 @@ Berikan analisis dalam Bahasa Indonesia yang sangat profesional, objektif, takti
                         parts: [{
                             text: promptText
                         }]
-                    }]
+                    }],
+                    safetySettings: [
+                        {
+                            category: "HARM_CATEGORY_HARASSMENT",
+                            threshold: "BLOCK_NONE"
+                        },
+                        {
+                            category: "HARM_CATEGORY_HATE_SPEECH",
+                            threshold: "BLOCK_NONE"
+                        },
+                        {
+                            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                            threshold: "BLOCK_NONE"
+                        },
+                        {
+                            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                            threshold: "BLOCK_NONE"
+                        }
+                    ]
                 })
             });
 
@@ -1216,8 +1234,11 @@ Berikan analisis dalam Bahasa Indonesia yang sangat profesional, objektif, takti
             }
 
             const resData = await response.json();
-            if (!resData.candidates || resData.candidates.length === 0) {
-                throw new Error('API Gemini tidak mengembalikan respon. Pastikan API Key Anda aktif dan kuota gratis tersedia.');
+            if (!resData.candidates || resData.candidates.length === 0 || !resData.candidates[0].content || !resData.candidates[0].content.parts || resData.candidates[0].content.parts.length === 0) {
+                if (resData.candidates && resData.candidates[0].finishReason === 'SAFETY') {
+                    throw new Error('Analisis ditolak oleh sistem keamanan Google Gemini karena mendeteksi data pribadi atau teks sensitif. Kami telah menurunkan filter sensor keamanan, silakan coba lagi.');
+                }
+                throw new Error('API Gemini tidak mengembalikan respon teks yang valid. Pastikan API Key Anda aktif dan memiliki kuota gratis.');
             }
 
             const aiResponseText = resData.candidates[0].content.parts[0].text;
