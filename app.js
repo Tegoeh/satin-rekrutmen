@@ -1196,53 +1196,90 @@ Petunjuk Analisis Khusus:
 Berikan analisis dalam Bahasa Indonesia yang sangat profesional, objektif, taktis, dan mudah dipahami.
 `;
 
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: promptText
-                        }]
-                    }],
-                    safetySettings: [
-                        {
-                            category: "HARM_CATEGORY_HARASSMENT",
-                            threshold: "BLOCK_NONE"
+            const modelsToTry = [
+                'gemini-1.5-flash',
+                'gemini-1.5-flash-latest',
+                'gemini-1.5-pro',
+                'gemini-1.5-pro-latest',
+                'gemini-1.0-pro'
+            ];
+
+            let lastError = null;
+            let success = false;
+
+            for (const modelName of modelsToTry) {
+                try {
+                    // Update HUD status secara realtime di konsol
+                    aiConsoleOutput.innerHTML = `
+                        <div class="ai-loading-console">
+                            <div class="spinner"></div>
+                            <p>AI sedang menganalisis formasi ideal menggunakan model <strong>${modelName}</strong>...</p>
+                        </div>
+                    `;
+
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
                         },
-                        {
-                            category: "HARM_CATEGORY_HATE_SPEECH",
-                            threshold: "BLOCK_NONE"
-                        },
-                        {
-                            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                            threshold: "BLOCK_NONE"
-                        },
-                        {
-                            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-                            threshold: "BLOCK_NONE"
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{
+                                    text: promptText
+                                }]
+                            }],
+                            safetySettings: [
+                                {
+                                    category: "HARM_CATEGORY_HARASSMENT",
+                                    threshold: "BLOCK_NONE"
+                                },
+                                {
+                                    category: "HARM_CATEGORY_HATE_SPEECH",
+                                    threshold: "BLOCK_NONE"
+                                },
+                                {
+                                    category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                                    threshold: "BLOCK_NONE"
+                                },
+                                {
+                                    category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                                    threshold: "BLOCK_NONE"
+                                }
+                            ]
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.error?.message || `HTTP error! status: ${response.status}`);
+                    }
+
+                    const resData = await response.json();
+                    if (!resData.candidates || resData.candidates.length === 0 || !resData.candidates[0].content || !resData.candidates[0].content.parts || resData.candidates[0].content.parts.length === 0) {
+                        if (resData.candidates && resData.candidates[0].finishReason === 'SAFETY') {
+                            throw new Error('Analisis ditolak oleh sistem keamanan Google Gemini karena mendeteksi data pribadi atau teks sensitif.');
                         }
-                    ]
-                })
-            });
+                        throw new Error('API Gemini tidak mengembalikan respon teks yang valid.');
+                    }
 
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.error?.message || `HTTP error! status: ${response.status}`);
-            }
+                    const aiResponseText = resData.candidates[0].content.parts[0].text;
+                    renderAiResponse(aiResponseText);
+                    success = true;
+                    break; // Keluar dari loop jika sukses!
 
-            const resData = await response.json();
-            if (!resData.candidates || resData.candidates.length === 0 || !resData.candidates[0].content || !resData.candidates[0].content.parts || resData.candidates[0].content.parts.length === 0) {
-                if (resData.candidates && resData.candidates[0].finishReason === 'SAFETY') {
-                    throw new Error('Analisis ditolak oleh sistem keamanan Google Gemini karena mendeteksi data pribadi atau teks sensitif. Kami telah menurunkan filter sensor keamanan, silakan coba lagi.');
+                } catch (err) {
+                    console.warn(`Model ${modelName} gagal dipanggil:`, err.message);
+                    lastError = err;
+                    // Jika error disebabkan sensor keamanan, hentikan loop (karena model lain akan diblokir juga)
+                    if (err.message.includes('keamanan') || err.message.includes('SAFETY')) {
+                        break;
+                    }
                 }
-                throw new Error('API Gemini tidak mengembalikan respon teks yang valid. Pastikan API Key Anda aktif dan memiliki kuota gratis.');
             }
 
-            const aiResponseText = resData.candidates[0].content.parts[0].text;
-            renderAiResponse(aiResponseText);
+            if (!success) {
+                throw lastError || new Error('Gagal melakukan analisis dengan seluruh model Gemini yang didukung.');
+            }
 
         } catch (err) {
             console.error('AI Analysis failed:', err);
