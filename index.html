@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satin Recruitment Dashboard 2026/2027</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cabinet+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-users-viewfinder"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>SATIN</h1>
+                    <p>Dashboard Rekrutmen Pengurus 2026/2027</p>
+                </div>
+            </div>
+            
+            <div class="sync-actions">
+                <div class="live-indicator">
+                    <span class="pulse-dot"></span>
+                    <span class="indicator-text">Terkoneksi ke Google Sheets</span>
+                </div>
+                <div class="last-sync" id="last-sync-time">Menghubungkan...</div>
+                <button class="btn btn-sync" id="btn-refresh" title="Sinkronkan Ulang Data">
+                    <i class="fa-solid fa-rotate spin-on-load" id="refresh-icon"></i>
+                    <span>Refresh</span>
+                </button>
+            </div>
+        </header>
+
+
+        <!-- DASHBOARD NAVIGATION TABS -->
+        <div class="dashboard-tabs animate-slide-up">
+            <button class="tab-btn active" data-tab="pendaftar-tab">
+                <i class="fa-solid fa-users"></i> Daftar Pendaftar
+            </button>
+            <button class="tab-btn" data-tab="statistik-tab">
+                <i class="fa-solid fa-chart-simple"></i> Analisis & Grafik Statistik
+            </button>
+            <button class="tab-btn" data-tab="struktur-tab">
+                <i class="fa-solid fa-sitemap"></i> Struktur Pengurus Terpilih
+            </button>
+        </div>
+
+        <!-- STATS GRID -->
+        <section class="stats-grid">
+            <div class="stat-card animate-slide-up">
+                <div class="stat-icon-wrapper text-red">
+                    <i class="fa-solid fa-user-graduate"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="stat-total-pendaftar">0</h3>
+                    <p>Total Pendaftar</p>
+                </div>
+            </div>
+
+            <div class="stat-card animate-slide-up" style="animation-delay: 0.1s;">
+                <div class="stat-icon-wrapper text-blue">
+                    <i class="fa-solid fa-handshake-angle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="stat-avg-commitment">0</h3>
+                    <p>Rata-rata Komitmen</p>
+                </div>
+            </div>
+
+            <div class="stat-card animate-slide-up" style="animation-delay: 0.2s;">
+                <div class="stat-icon-wrapper text-amber">
+                    <i class="fa-solid fa-school"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="stat-top-school">-</h3>
+                    <p>Sekolah Terbanyak</p>
+                </div>
+            </div>
+
+            <div class="stat-card animate-slide-up" style="animation-delay: 0.3s;">
+                <div class="stat-icon-wrapper text-emerald">
+                    <i class="fa-solid fa-shield-heart"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="stat-high-commitment">0</h3>
+                    <p>Komitmen Tinggi (≥8)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB: DAFTAR PENDAFTAR -->
+        <div class="dashboard-tab-content" id="pendaftar-tab">
+            <section class="control-panel">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="search-input" placeholder="Cari nama pendaftar atau asal sekolah...">
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-item">
+                    <label for="filter-posisi"><i class="fa-solid fa-briefcase"></i> Posisi</label>
+                    <select id="filter-posisi" class="filter-select">
+                        <option value="all">Semua Posisi Utama</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label for="filter-sekolah"><i class="fa-solid fa-graduation-cap"></i> Asal Sekolah</label>
+                    <select id="filter-sekolah" class="filter-select">
+                        <option value="all">Semua Sekolah</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label for="sort-select"><i class="fa-solid fa-arrow-down-wide-short"></i> Urutan</label>
+                    <select id="sort-select" class="filter-select">
+                        <option value="terbaru">Paling Baru</option>
+                        <option value="komitmen-desc">Komitmen Tertinggi</option>
+                        <option value="nama-asc">Nama A-Z</option>
+                    </select>
+                </div>
+
+                <div class="view-toggle">
+                    <button class="view-btn active" id="view-grid" title="Tampilan Kartu">
+                        <i class="fa-solid fa-grip"></i>
+                    </button>
+                    <button class="view-btn" id="view-table" title="Tampilan Tabel">
+                        <i class="fa-solid fa-list"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- DATA CONTAINER -->
+        <main class="data-container">
+            <!-- Loading State -->
+            <div class="loading-state" id="loading-overlay">
+                <div class="loader-spinner"></div>
+                <h4>Menghubungkan ke Google Spreadsheet</h4>
+                <p>Mengambil dan merapikan data pendaftaran secara realtime...</p>
+            </div>
+
+            <!-- Error State -->
+            <div class="error-state hidden" id="error-overlay">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <h4>Koneksi Spreadsheet Gagal</h4>
+                <p id="error-message">Silakan periksa koneksi internet Anda atau pastikan URL spreadsheet sudah benar.</p>
+                <button class="btn btn-sync mt-3" id="btn-retry">
+                    <i class="fa-solid fa-arrows-rotate"></i> Coba Lagi
+                </button>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state hidden" id="empty-overlay">
+                <i class="fa-solid fa-users-slash"></i>
+                <h4>Pendaftar Tidak Ditemukan</h4>
+                <p>Tidak ada data pendaftaran yang cocok dengan filter pencarian Anda.</p>
+            </div>
+
+            <!-- GRID VIEW -->
+            <div class="applicants-grid" id="grid-view-container">
+                <!-- Cards injected by JS -->
+            </div>
+
+            <!-- TABLE VIEW -->
+            <div class="table-wrapper hidden" id="table-view-container">
+                <table class="applicants-table">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama Lengkap</th>
+                            <th>Asal Sekolah</th>
+                            <th>Pilihan 1</th>
+                            <th>Pilihan 2</th>
+                            <th>WhatsApp</th>
+                            <th>Komitmen</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Table rows injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+        </div> <!-- Close pendaftar-tab -->
+
+        <!-- TAB: ANALISIS & GRAFIK STATISTIK -->
+        <section class="dashboard-tab-content hidden" id="statistik-tab">
+            <div class="charts-grid animate-slide-up">
+                <div class="chart-card">
+                    <h4><i class="fa-solid fa-school text-amber"></i> Distribusi Pendaftar Berdasarkan Sekolah</h4>
+                    <div class="chart-container">
+                        <canvas id="schoolChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h4><i class="fa-solid fa-briefcase text-red"></i> Preferensi Jabatan Utama (Pilihan 1)</h4>
+                    <div class="chart-container" style="max-height: 350px; display: flex; justify-content: center;">
+                        <canvas id="positionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB: STRUKTUR PENGURUS TERPILIH -->
+        <section class="dashboard-tab-content hidden" id="struktur-tab">
+            <div class="struktur-org-container animate-slide-up">
+                <div class="struktur-header-card">
+                    <span class="role-label-badge" style="color: var(--primary-light);">KETUA UMUM (TERPILIH)</span>
+                    <h3>Teguh</h3>
+                    <p style="color: var(--text-secondary);">Pemimpin SATIN Periode 2026/2027</p>
+                </div>
+                
+                <div class="struktur-grid">
+                    <!-- BPH Slots -->
+                    <div class="struktur-slot-card">
+                        <span class="role-badge">WAKIL KETUA I</span>
+                        <h4 id="slot-wakil-ketua-umum">Belum Terpilih</h4>
+                    </div>
+                    <div class="struktur-slot-card">
+                        <span class="role-badge">WAKIL KETUA II</span>
+                        <h4 id="slot-wakil-ketua-ii">Belum Terpilih</h4>
+                    </div>
+                    <div class="struktur-slot-card">
+                        <span class="role-badge">SEKRETARIS I</span>
+                        <h4 id="slot-sekretaris-i">Belum Terpilih</h4>
+                    </div>
+                    <div class="struktur-slot-card">
+                        <span class="role-badge">SEKRETARIS II</span>
+                        <h4 id="slot-sekretaris-ii">Belum Terpilih</h4>
+                    </div>
+                    <div class="struktur-slot-card">
+                        <span class="role-badge">BENDAHARA I</span>
+                        <h4 id="slot-bendahara-i">Belum Terpilih</h4>
+                    </div>
+                    <div class="struktur-slot-card">
+                        <span class="role-badge">BENDAHARA II</span>
+                        <h4 id="slot-bendahara-ii">Belum Terpilih</h4>
+                    </div>
+                    
+                    <!-- Koor Bidang -->
+                    <div class="struktur-slot-card">
+                        <span class="role-badge">KOOR. BIDANG ORGANISASI</span>
+                        <h4 id="slot-koor-bidang-organisasi">Belum Terpilih</h4>
+                    </div>
+                    <div class="struktur-slot-card">
+                        <span class="role-badge">KOOR. BIDANG PENGABDIAN MASYARAKAT</span>
+                        <h4 id="slot-koor-bidang-pengabdian-masyarakat">Belum Terpilih</h4>
+                    </div>
+                    <div class="struktur-slot-card">
+                        <span class="role-badge">KOOR. BIDANG HUMAS</span>
+                        <h4 id="slot-koor-bidang-humas">Belum Terpilih</h4>
+                    </div>
+                    <div class="struktur-slot-card">
+                        <span class="role-badge">KOOR. BIDANG PENGEMBANGAN DIRI</span>
+                        <h4 id="slot-koor-bidang-penggalian-dana">Belum Terpilih</h4>
+                    </div>
+                    <div class="struktur-slot-card">
+                        <span class="role-badge">KOOR. BIDANG PENGGALIAN DANA</span>
+                        <h4 id="slot-koor-bidang-penggalihan-dana">Belum Terpilih</h4>
+                    </div>
+                    
+                    <!-- Koor Wilayah -->
+                    <div class="struktur-slot-card">
+                        <span class="role-badge">KOOR. WILAYAH PEKUTATAN</span>
+                        <h4 id="slot-koor-wilayah-pekutatan">Belum Terpilih</h4>
+                    </div>
+                    <div class="struktur-slot-card">
+                        <span class="role-badge">KOOR. WILAYAH JEMBRANA</span>
+                        <h4 id="slot-koor-wilayah-jembrana">Belum Terpilih</h4>
+                    </div>
+                    <div class="struktur-slot-card">
+                        <span class="role-badge">KOOR. WILAYAH NEGARA</span>
+                        <h4 id="slot-koor-wilayah-negara">Belum Terpilih</h4>
+                    </div>
+                    <div class="struktur-slot-card">
+                        <span class="role-badge">KOOR. WILAYAH MELAYA</span>
+                        <h4 id="slot-koor-wilayah-melaya">Belum Terpilih</h4>
+                    </div>
+                    <div class="struktur-slot-card">
+                        <span class="role-badge">KOOR. WILAYAH MENDOYO</span>
+                        <h4 id="slot-koor-wilayah-mendoyo">Belum Terpilih</h4>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- DETAIL APPLICANT MODAL -->
+    <div class="modal-overlay" id="detail-modal">
+        <div class="modal-card">
+            <button class="modal-close-btn" id="modal-close"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="modal-header">
+                <div class="applicant-avatar-big" id="modal-avatar">-</div>
+                <div class="applicant-title">
+                    <h2 id="modal-nama">Ni Komang Pebri Yanti</h2>
+                    <p id="modal-sekolah" class="text-amber"><i class="fa-solid fa-graduation-cap"></i> SMAN 1 Pekutatan</p>
+                </div>
+            </div>
+
+            <div class="modal-body-content">
+                <!-- Bio Grid -->
+                <div class="modal-info-grid">
+                    <div class="info-block">
+                        <span class="info-label">WhatsApp</span>
+                        <span class="info-value" id="modal-phone">081353719969</span>
+                    </div>
+                    <div class="info-block">
+                        <span class="info-label">Email</span>
+                        <span class="info-value" id="modal-email">email@gmail.com</span>
+                    </div>
+                    <div class="info-block" style="grid-column: span 2;">
+                        <span class="info-label">Alamat Domisili</span>
+                        <span class="info-value" id="modal-alamat">Asahduren, Pekutatan</span>
+                    </div>
+                </div>
+
+                <!-- Position Preferences -->
+                <div class="position-split">
+                    <div class="pos-choice-card p-1">
+                        <div class="badge-choice badge-choice-1">PILIHAN UTAMA</div>
+                        <h4 id="modal-pilihan1">Koor. Wilayah Pekutatan</h4>
+                    </div>
+                    <div class="pos-choice-card p-2">
+                        <div class="badge-choice badge-choice-2">PILIHAN CADANGAN</div>
+                        <h4 id="modal-pilihan2">Koor. Bid. HUMAS</h4>
+                    </div>
+                </div>
+
+                <!-- Commitment Meter -->
+                <div class="commitment-section">
+                    <div class="section-title">
+                        <span>Skala Komitmen</span>
+                        <span id="modal-komitmen-val" class="commitment-badge commitment-high">10/10</span>
+                    </div>
+                    <div class="commitment-bar-large">
+                        <div class="commitment-bar-fill" id="modal-komitmen-bar"></div>
+                    </div>
+                </div>
+
+                <!-- KEPUTUSAN SELEKSI PANEL -->
+                <div class="admission-panel">
+                    <h4 class="answer-title"><i class="fa-solid fa-square-check text-emerald"></i> Keputusan Seleksi Calon Pengurus</h4>
+                    <div class="admission-btn-group">
+                        <button class="btn-admit active" data-status="belum">Belum Diproses</button>
+                        <button class="btn-admit" data-status="diterima">Diterima (Sesuai Pilihan)</button>
+                        <button class="btn-admit" data-status="diterima-dirubah">Diterima (Posisi Dirubah)</button>
+                        <button class="btn-admit" data-status="ditolak">Ditolak</button>
+                    </div>
+                    
+                    <div class="new-role-select-box hidden" id="new-role-container">
+                        <label for="new-role-dropdown"><i class="fa-solid fa-user-plus text-blue"></i> Pilih Jabatan Baru:</label>
+                        <select id="new-role-dropdown" class="filter-select">
+                            <option value="">-- Pilih Jabatan --</option>
+                            <option value="Wakil Ketua I">Wakil Ketua I</option>
+                            <option value="Wakil Ketua II">Wakil Ketua II</option>
+                            <option value="Sekretaris I">Sekretaris I</option>
+                            <option value="Sekretaris II">Sekretaris II</option>
+                            <option value="Bendahara I">Bendahara I</option>
+                            <option value="Bendahara II">Bendahara II</option>
+                            <option value="Koor. Bidang Organisasi">Koor. Bidang Organisasi</option>
+                            <option value="Anggota Bidang Organisasi">Anggota Bidang Organisasi</option>
+                            <option value="Koor. Bidang Pengabdian Masyarakat">Koor. Bidang Pengabdian Masyarakat</option>
+                            <option value="Anggota Bidang Pengabdian Masyarakat">Anggota Bidang Pengabdian Masyarakat</option>
+                            <option value="Koor. Bidang Humas">Koor. Bidang Humas</option>
+                            <option value="Anggota Bidang Humas">Anggota Bidang Humas</option>
+                            <option value="Koor. Bidang Pengembangan Diri">Koor. Bidang Pengembangan Diri</option>
+                            <option value="Anggota Bidang Pengembangan Diri">Anggota Bidang Pengembangan Diri</option>
+                            <option value="Koor. Bidang Penggalian Dana">Koor. Bidang Penggalian Dana</option>
+                            <option value="Anggota Bidang Penggalian Dana">Anggota Bidang Penggalian Dana</option>
+                            <option value="Koor. Wilayah Pekutatan">Koor. Wilayah Pekutatan</option>
+                            <option value="Koor. Wilayah Jembrana">Koor. Wilayah Jembrana</option>
+                            <option value="Koor. Wilayah Negara">Koor. Wilayah Negara</option>
+                            <option value="Koor. Wilayah Melaya">Koor. Wilayah Melaya</option>
+                            <option value="Koor. Wilayah Mendoyo">Koor. Wilayah Mendoyo</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-sync mt-3" id="btn-save-decision" style="width: 100%; justify-content: center; margin-top: 12px;">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan Keputusan Seleksi
+                    </button>
+                </div>
+
+                <!-- Text Answers -->
+                <div class="text-answer-section">
+                    <h4 class="answer-title"><i class="fa-solid fa-circle-question"></i> Alasan Memilih Posisi</h4>
+                    <p class="answer-body" id="modal-alasan">Alasan pendaftar memilih posisi ini...</p>
+                </div>
+
+                <div class="text-answer-section">
+                    <h4 class="answer-title"><i class="fa-solid fa-heart"></i> Harapan & Motivasi untuk SATIN</h4>
+                    <p class="answer-body" id="modal-harapan">Harapan pendaftar...</p>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <a href="#" target="_blank" class="whatsapp-btn" id="modal-whatsapp-link">
+                    <i class="fa-brands fa-whatsapp"></i> Hubungi Calon Pengurus via WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
