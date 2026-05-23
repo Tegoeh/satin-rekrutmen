@@ -1453,6 +1453,88 @@ h1, h2, h3, h4 {
   .admission-btn-group {
     grid-template-columns: 1fr;
   }
+
+  /* Optimasi modal khusus BPH/AI di HP/Android */
+  #ai-dashboard-modal .modal-card {
+    height: 100% !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+  }
+  
+  #ai-dashboard-modal .modal-body-content {
+    padding: 16px 16px 40px !important;
+    gap: 16px !important;
+    overflow-y: auto !important;
+  }
+  
+  .ai-header-style {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding-top: 30px !important;
+    padding-right: 0 !important;
+    gap: 12px !important;
+  }
+  
+  .ai-header-style .applicant-title {
+    text-align: center !important;
+  }
+  
+  .ai-header-style h2 {
+    font-size: 1.4rem !important;
+    margin-bottom: 4px !important;
+  }
+  
+  .ai-header-style p {
+    font-size: 0.8rem !important;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+  
+  .api-key-input-container {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  
+  .api-key-input-container button {
+    width: 100% !important;
+    margin-top: 0 !important;
+  }
+  
+  .ai-actions-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  
+  .ai-stats-summary {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 4px !important;
+    text-align: center !important;
+  }
+  
+  .ai-stats-summary .dot-separator {
+    display: none !important;
+  }
+  
+  #btn-run-ai {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  
+  .console-body {
+    height: 260px !important; /* Tinggi konsol yang lebih kompak agar muat di semua layar HP */
+    padding: 16px !important;
+    font-size: 0.85rem !important;
+  }
+  
+  #ai-dashboard-modal .modal-close-btn, 
+  #ai-password-modal .modal-close-btn {
+    top: 12px !important;
+    right: 12px !important;
+    z-index: 1010 !important;
+  }
 }
 
 /* ==========================================================
