@@ -1434,7 +1434,7 @@ h1, h2, h3, h4 {
 @media (max-width: 768px) {
   :root {
     --glass-blur: none !important; /* Mematikan backdrop-filter blur 20px yang sangat berat di HP */
-    --glass-bg: rgba(18, 24, 40, 0.95); /* Mengubah background menjadi solid agar keterbacaan tinggi */
+    --glass-bg: rgba(18, 24, 40, 0.98); /* Mengubah background menjadi solid agar keterbacaan tinggi */
     --glass-border: rgba(255, 255, 255, 0.08);
   }
   
@@ -1454,17 +1454,40 @@ h1, h2, h3, h4 {
     grid-template-columns: 1fr;
   }
 
-  /* Optimasi modal khusus BPH/AI di HP/Android */
-  #ai-dashboard-modal .modal-card {
-    height: 100% !important;
-    max-height: 100vh !important;
-    border-radius: 0 !important;
+  /* Mengaktifkan scroll natural pada modal overlay secara penuh */
+  #ai-dashboard-modal, #detail-modal {
+    display: none !important;
+    opacity: 0;
+    pointer-events: none;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important; /* Mencegah mutlak gulir tembus ke layar belakang di HP */
+    -webkit-overflow-scrolling: touch;
+    padding: 16px !important;
   }
   
-  #ai-dashboard-modal .modal-body-content {
-    padding: 16px 16px 40px !important;
+  #ai-dashboard-modal.active, #detail-modal.active {
+    display: block !important; /* Diubah menjadi block agar bisa discroll ke bawah jika kartunya panjang */
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Mengubah kartu modal menjadi dokumen blok terpadu di layar HP */
+  #ai-dashboard-modal .modal-card, #detail-modal .modal-card {
+    height: auto !important;
+    max-height: none !important;
+    margin: 30px auto 60px !important; /* Memberikan ruang scroll atas & bawah agar estetik */
+    border-radius: var(--radius-md) !important;
+    overflow: visible !important; /* Hapus jepitan visual */
+    display: block !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+  }
+  
+  #ai-dashboard-modal .modal-body-content, #detail-modal .modal-body-content {
+    padding: 20px 16px 30px !important;
     gap: 16px !important;
-    overflow-y: auto !important;
+    overflow: visible !important; /* Hilangkan scrollbar ganda di dalam modal */
+    height: auto !important;
+    display: block !important;
   }
   
   .ai-header-style {
@@ -1494,6 +1517,7 @@ h1, h2, h3, h4 {
   .api-key-input-container {
     flex-direction: column !important;
     gap: 8px !important;
+    margin-bottom: 8px !important;
   }
   
   .api-key-input-container button {
@@ -1505,6 +1529,7 @@ h1, h2, h3, h4 {
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 12px !important;
+    margin-bottom: 16px !important;
   }
   
   .ai-stats-summary {
@@ -1523,14 +1548,22 @@ h1, h2, h3, h4 {
     justify-content: center !important;
   }
   
+  /* Hapus scrollbar ganda di konsol pembacaan teks */
   .console-body {
-    height: 260px !important; /* Tinggi konsol yang lebih kompak agar muat di semua layar HP */
-    padding: 16px !important;
+    height: auto !important; /* Biar melebar ke bawah secara utuh tanpa melahirkan scrollbar dalam scrollbar */
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 12px !important;
     font-size: 0.85rem !important;
   }
   
+  .ai-console-wrapper {
+    overflow: visible !important;
+  }
+  
   #ai-dashboard-modal .modal-close-btn, 
-  #ai-password-modal .modal-close-btn {
+  #ai-password-modal .modal-close-btn,
+  #detail-modal .modal-close-btn {
     top: 12px !important;
     right: 12px !important;
     z-index: 1010 !important;
