@@ -345,6 +345,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- INTERACTIVE FILTER & DYNAMIC POPULATION ---
     const populateFilterOptions = () => {
+        // Simpan filter yang sedang aktif dipilih agar tidak hilang saat data di-update
+        const selectedPosisi = filterPosisi.value;
+        const selectedSekolah = filterSekolah.value;
+
         // Clear except first
         filterPosisi.innerHTML = '<option value="all">Semua Posisi Utama</option>';
         filterSekolah.innerHTML = '<option value="all">Semua Sekolah</option>';
@@ -366,6 +370,19 @@ document.addEventListener('DOMContentLoaded', () => {
             opt.textContent = sch;
             filterSekolah.appendChild(opt);
         });
+
+        // Terapkan kembali pilihan filter jika masih tersedia pada daftar opsi baru
+        if (positions.includes(selectedPosisi)) {
+            filterPosisi.value = selectedPosisi;
+        } else {
+            filterPosisi.value = 'all';
+        }
+
+        if (schools.includes(selectedSekolah)) {
+            filterSekolah.value = selectedSekolah;
+        } else {
+            filterSekolah.value = 'all';
+        }
     };
 
     // --- STATISTICS CARD CALCULATIONS ---
