@@ -414,6 +414,89 @@
             </div>
         </div>
     </div>
+
+    <!-- AI PASSWORD ACCESS MODAL (SECRET) -->
+    <div class="modal-overlay" id="ai-password-modal">
+        <div class="modal-card modal-card-sm text-center" style="max-width: 400px;">
+            <button class="modal-close-btn" id="ai-password-close"><i class="fa-solid fa-xmark"></i></button>
+            <div class="ai-logo-header">
+                <div class="ai-glowing-brain"><i class="fa-solid fa-brain-circuit"></i></div>
+                <h3>Formatur Admin Area</h3>
+                <p>Fitur ini dilindungi sandi administrasi BPH</p>
+            </div>
+            <div class="ai-password-form">
+                <div class="input-group">
+                    <label for="ai-password-input" style="display: block; text-align: left; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-secondary);">Sandi Admin</label>
+                    <input type="password" id="ai-password-input" placeholder="••••••••" class="filter-select" style="width: 100%;">
+                </div>
+                <div class="error-text hidden" id="ai-password-error" style="color: #EF4444; font-size: 0.8rem; margin-top: 8px; font-weight: 600; text-align: left;"><i class="fa-solid fa-triangle-exclamation"></i> Sandi salah! Silakan coba lagi.</div>
+                <button class="btn btn-sync mt-3 w-100" id="ai-password-submit" style="justify-content: center; width: 100%; margin-top: 16px;">
+                    <i class="fa-solid fa-unlock-keyhole"></i> Buka Akses AI
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI DASHBOARD HUB MODAL (SECRET) -->
+    <div class="modal-overlay" id="ai-dashboard-modal">
+        <div class="modal-card modal-card-lg" style="max-width: 900px;">
+            <button class="modal-close-btn" id="ai-dashboard-close"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="modal-header ai-header-style">
+                <div class="ai-icon-big"><i class="fa-solid fa-microchip animate-pulse"></i></div>
+                <div class="applicant-title">
+                    <h2>AI Formatur Assistant</h2>
+                    <p style="color: var(--text-secondary);">Analisis Pencocokan Calon Pengurus SATIN 2026/2027 Berbasis Pedoman Organisasi</p>
+                </div>
+            </div>
+
+            <div class="modal-body-content">
+                <!-- API Key Configuration Section -->
+                <div class="ai-config-box">
+                    <div class="ai-config-header">
+                        <h4><i class="fa-solid fa-key text-amber"></i> Google Gemini API Configuration</h4>
+                        <a href="https://aistudio.google.com/" target="_blank" class="text-link"><i class="fa-solid fa-up-right-from-square"></i> Dapatkan API Key Gratis</a>
+                    </div>
+                    <div class="api-key-input-container">
+                        <input type="password" id="ai-api-key-input" placeholder="Masukkan Gemini API Key Anda disini..." class="filter-select">
+                        <button class="btn btn-sync" id="ai-save-api-key">
+                            <i class="fa-solid fa-floppy-disk"></i> Simpan
+                        </button>
+                    </div>
+                    <p class="api-note"><i class="fa-solid fa-circle-info"></i> API Key disimpan aman secara lokal di browser Anda dan langsung terhubung ke server resmi Google Gemini.</p>
+                </div>
+
+                <!-- Live Status & Actions -->
+                <div class="ai-actions-row">
+                    <div class="ai-stats-summary">
+                        <span>Pendaftar Terdeteksi: <strong id="ai-total-candidates" class="text-emerald">0 Orang</strong></span>
+                        <span class="dot-separator">•</span>
+                        <span>Acuan: <strong class="text-amber">Pedoman Organisasi (PO)</strong></span>
+                    </div>
+                    <button class="btn btn-sync btn-glow" id="btn-run-ai">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Jalankan Rekomendasi Formasi AI
+                    </button>
+                </div>
+
+                <!-- Analysis Console Area -->
+                <div class="ai-console-wrapper">
+                    <div class="console-header">
+                        <span><i class="fa-solid fa-terminal"></i> AI Analysis Console</span>
+                        <button class="btn-copy-console hidden" id="btn-copy-ai-output" title="Salin Analisis ke Clipboard">
+                            <i class="fa-solid fa-copy"></i> Salin Rekomendasi
+                        </button>
+                    </div>
+                    <div class="console-body" id="ai-console-output">
+                        <div class="console-placeholder">
+                            <i class="fa-solid fa-sparkles animate-pulse"></i>
+                            <p>Menunggu eksekusi analisis... Masukkan API Key dan klik tombol di atas untuk memulai analisis cerdas formatur.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>

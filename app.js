@@ -67,6 +67,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const newRoleDropdown = document.getElementById('new-role-dropdown');
     let currentSelectedStatus = 'belum'; // Temp BPH decision state
 
+    // AI Formatur Assistant DOM Elements
+    const aiPasswordModal = document.getElementById('ai-password-modal');
+    const aiPasswordClose = document.getElementById('ai-password-close');
+    const aiPasswordSubmit = document.getElementById('ai-password-submit');
+    const aiPasswordInput = document.getElementById('ai-password-input');
+    const aiPasswordError = document.getElementById('ai-password-error');
+    
+    const aiDashboardModal = document.getElementById('ai-dashboard-modal');
+    const aiDashboardClose = document.getElementById('ai-dashboard-close');
+    const aiApiKeyInput = document.getElementById('ai-api-key-input');
+    const aiSaveApiKey = document.getElementById('ai-save-api-key');
+    const aiTotalCandidates = document.getElementById('ai-total-candidates');
+    const btnRunAi = document.getElementById('btn-run-ai');
+    const aiConsoleOutput = document.getElementById('ai-console-output');
+    const btnCopyAiOutput = document.getElementById('btn-copy-ai-output');
+
     // --- CSV PARSER ENGINE (Supports quotes & embedded newlines) ---
     const parseCSV = (text) => {
         const lines = [];
@@ -969,6 +985,273 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // ==========================================================
+    // AI FORMATUR ASSISTANT LOGIC (SECRET & PASSWORD PROTECTED)
+    // ==========================================================
+
+    // 1. Deteksi Klik Rahasia (Triple-Click pada Logo SATIN)
+    const logoIcon = document.querySelector('.logo-icon');
+    let logoClickCount = 0;
+    let logoClickTimeout = null;
+
+    if (logoIcon) {
+        logoIcon.addEventListener('click', () => {
+            logoClickCount++;
+            clearTimeout(logoClickTimeout);
+            
+            if (logoClickCount === 3) {
+                logoClickCount = 0;
+                // Efek visual: kilatan merah sementara pada ikon logo
+                logoIcon.style.textShadow = '0 0 15px var(--primary-light)';
+                logoIcon.style.color = 'var(--primary-light)';
+                setTimeout(() => {
+                    logoIcon.style.textShadow = '';
+                    logoIcon.style.color = '';
+                }, 1000);
+                
+                openAiPasswordModal();
+            } else {
+                logoClickTimeout = setTimeout(() => {
+                    logoClickCount = 0;
+                }, 800);
+            }
+        });
+    }
+
+    // 2. Pintasan Tombol Keyboard Rahasia: Ctrl + Shift + A
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'a') {
+            e.preventDefault();
+            openAiPasswordModal();
+        }
+    });
+
+    const openAiPasswordModal = () => {
+        aiPasswordInput.value = '';
+        aiPasswordError.classList.add('hidden');
+        aiPasswordModal.classList.add('active');
+        aiPasswordInput.focus();
+    };
+
+    // Penutupan Modal AI
+    aiPasswordClose.addEventListener('click', () => aiPasswordModal.classList.remove('active'));
+    aiPasswordModal.addEventListener('click', (e) => {
+        if (e.target === aiPasswordModal) aiPasswordModal.classList.remove('active');
+    });
+
+    aiDashboardClose.addEventListener('click', () => aiDashboardModal.classList.remove('active'));
+    aiDashboardModal.addEventListener('click', (e) => {
+        if (e.target === aiDashboardModal) aiDashboardModal.classList.remove('active');
+    });
+
+    // 3. Verifikasi Kata Sandi Admin (Default: satinbph)
+    const verifyAdminPassword = () => {
+        const inputPassword = aiPasswordInput.value.trim().toLowerCase();
+        if (inputPassword === 'satinbph') {
+            aiPasswordModal.classList.remove('active');
+            openAiDashboard();
+        } else {
+            aiPasswordError.classList.remove('hidden');
+            aiPasswordInput.focus();
+            aiPasswordInput.select();
+        }
+    };
+
+    aiPasswordSubmit.addEventListener('click', verifyAdminPassword);
+    aiPasswordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') verifyAdminPassword();
+    });
+
+    // 4. Membuka Dashboard Asisten AI
+    const openAiDashboard = () => {
+        const savedKey = localStorage.getItem('satin_gemini_api_key') || '';
+        aiApiKeyInput.value = savedKey;
+        
+        aiTotalCandidates.textContent = `${applicants.length} Orang`;
+        resetConsoleOutput();
+        
+        aiDashboardModal.classList.add('active');
+    };
+
+    const resetConsoleOutput = () => {
+        aiConsoleOutput.innerHTML = `
+            <div class="console-placeholder">
+                <i class="fa-solid fa-wand-magic-sparkles animate-pulse" style="color: rgba(16, 185, 129, 0.4); font-size: 2.5rem; text-shadow: 0 0 10px rgba(16, 185, 129, 0.2);"></i>
+                <p>Konsol Asisten AI siap digunakan. Masukkan API Key Anda di atas, lalu klik tombol <strong>"Jalankan Rekomendasi Formasi AI"</strong> untuk memulai pencocokan cerdas secara otomatis.</p>
+            </div>
+        `;
+        btnCopyAiOutput.classList.add('hidden');
+    };
+
+    // Menyimpan API Key secara lokal & aman
+    aiSaveApiKey.addEventListener('click', () => {
+        const key = aiApiKeyInput.value.trim();
+        if (!key) {
+            alert('Silakan masukkan API Key yang valid!');
+            return;
+        }
+        localStorage.setItem('satin_gemini_api_key', key);
+        alert('Gemini API Key berhasil disimpan secara aman di browser lokal Anda!');
+    });
+
+    // 5. Eksekusi Analisis Rekomendasi AI (Google Gemini 1.5 Flash API)
+    btnRunAi.addEventListener('click', async () => {
+        const apiKey = localStorage.getItem('satin_gemini_api_key') || aiApiKeyInput.value.trim();
+        if (!apiKey) {
+            alert('Silakan masukkan dan simpan Gemini API Key Anda terlebih dahulu!');
+            aiApiKeyInput.focus();
+            return;
+        }
+
+        if (applicants.length === 0) {
+            alert('Tidak ada data pendaftar yang tersedia untuk dianalisis!');
+            return;
+        }
+
+        btnRunAi.disabled = true;
+        btnRunAi.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menganalisis Calon...`;
+        aiConsoleOutput.innerHTML = `
+            <div class="ai-loading-console">
+                <div class="spinner"></div>
+                <p>AI sedang menganalisis data PO dan merancang formasi ideal pengurus...</p>
+            </div>
+        `;
+
+        try {
+            // Persiapkan data pendaftar yang padat & efisien untuk meminimalkan token & maksimalkan akurasi
+            const compactApplicants = applicants.map(a => ({
+                Nama: a.nama,
+                Asal_Sekolah: a.sekolah,
+                Komitmen: `${a.komitmen}/10`,
+                Pilihan_1: a.pilihan1,
+                Pilihan_2: a.pilihan2 || 'Tidak ada',
+                Alasan: a.alasan,
+                Harapan: a.harapan
+            }));
+
+            const poExcerpt = `
+KRITERIA & TUPOKSI JABATAN PENGURUS SATIN (Satuan Inti PMR Wira Jembrana) 2026/2027:
+1. Ketua Umum: Teguh (Telah Diisi). Memimpin, mengarahkan tupoksi BPH, berkoordinasi dengan PMI & FORPIS.
+2. Wakil Ketua I & II: Mewakili Ketua Umum, mendelegasikan tugas ke bidang apabila berhalangan. Cocok untuk calon dengan jiwa kepemimpinan tinggi dan komitmen kuat.
+3. Sekretaris I: Surat-menyurat, koordinasi mobilisasi/penugasan anggota, mendata keaktifan dan absensi saat bertugas. Membutuhkan ketelitian tinggi.
+4. Sekretaris II: Pelaporan kegiatan bidang, mencatat hasil rapat (notulensi).
+5. Bendahara I: Koordinasi anggaran kegiatan dengan Markas PMI Jembrana, memastikan kesesuaian anggaran porsi panitia.
+6. Bendahara II: Mencatat iuran anggota, mengeluarkan dana suka duka.
+7. Bidang Organisasi: Memelihara keutuhan & unsur kesesuaian AD/ART/Pedoman Organisasi, memantau kegiatan suka duka.
+8. Bidang Pengabdian Masyarakat: Penggerak utama bakti sosial, donor darah, aksi cinta lingkungan. Cocok untuk calon yang aktif berkegiatan sosial di lapangan.
+9. Bidang Humas: Dokumentasi aktivitas di media sosial, caption, press release, naskah berita. Sangat cocok untuk calon yang punya ketertarikan di bidang media/konten kreator/publikasi.
+10. Bidang Pengembangan Diri: Penggerak kegiatan DIKLAT, Latihan Bersama (Latber), Pelatihan Khusus. Cocok bagi calon yang pandai melatih, berpendidikan, dan berwawasan luas.
+11. Bidang Penggalian Dana: Menggali ide penggalian dana, donatur/sponsor kegiatan. Cocok untuk calon yang inovatif, supel, dan pandai negosiasi.
+12. Koordinator Wilayah (Pekutatan, Jembrana, Negara, Melaya, Mendoyo): Berkoordinasi dengan Ketua Umum, merancang dan mengetuai latihan bersama PMR sekolah di wilayahnya minimal 1x setahun, meneruskan informasi ke PMR sekolah di wilayahnya. Harus sesuai domisili/sekolah di wilayah bersangkutan.
+`;
+
+            const promptText = `
+Anda adalah AI Asisten Formatur untuk SATIN (Satuan Inti PMR Wira PMI Kabupaten Jembrana) Periode 2026/2027.
+Tugas Anda adalah menganalisis seluruh data calon pengurus yang mendaftar dan memberikan rekomendasi penempatan jabatan (BPH, Koordinator Bidang, dan Koordinator Wilayah) berdasarkan:
+1. Pilihan 1 & Pilihan 2 calon pengurus.
+2. Skala komitmen mereka (utamakan komitmen tinggi).
+3. Alasan memilih posisi dan harapan/motivasi mereka.
+4. Kriteria & tupoksi jabatan pengurus SATIN.
+
+Berikut adalah kriteria & tupoksi jabatan pengurus SATIN:
+${poExcerpt}
+
+Berikut adalah data seluruh Calon Pengurus yang mendaftar:
+${JSON.stringify(compactApplicants, null, 2)}
+
+Petunjuk Analisis Khusus:
+1. Ketua Umum adalah Teguh (tidak perlu diganti).
+2. Tentukan rekomendasi ideal untuk jabatan:
+   - Wakil Ketua I & II (Cari calon yang komitmennya sangat tinggi dan menunjukkan visi kepemimpinan).
+   - Sekretaris I & II (Cari yang teliti, rapi, dan teratur).
+   - Bendahara I & II (Cari yang disiplin, jujur, dan bertanggung jawab).
+   - Koordinator Bidang (Organisasi, Pengabdian Masyarakat, Humas, Pengembangan Diri, Penggalian Dana). Sesuaikan minat/alasan dengan tupoksi bidang tersebut!
+   - Koordinator Wilayah (Pekutatan, Jembrana, Negara, Melaya, Mendoyo). Penting: Harus disesuaikan dengan domisili/sekolah calon agar efektif bertugas di wilayahnya!
+3. Berikan alternatif nama cadangan (misal: Alternatif: Nama Calon) jika ada posisi yang memiliki persaingan ketat.
+4. Output harus berformat Markdown terstruktur rapi. Berikan ulasan singkat (1-2 kalimat) alasan mengapa calon tersebut sangat cocok di posisi itu. Tebalkan nama calon pengurus agar mudah dibaca dewan formatur saat rapat.
+
+Berikan analisis dalam Bahasa Indonesia yang sangat profesional, objektif, taktis, dan mudah dipahami.
+`;
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: promptText
+                        }]
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error?.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const resData = await response.json();
+            if (!resData.candidates || resData.candidates.length === 0) {
+                throw new Error('API Gemini tidak mengembalikan respon. Pastikan API Key Anda aktif dan kuota gratis tersedia.');
+            }
+
+            const aiResponseText = resData.candidates[0].content.parts[0].text;
+            renderAiResponse(aiResponseText);
+
+        } catch (err) {
+            console.error('AI Analysis failed:', err);
+            aiConsoleOutput.innerHTML = `
+                <div class="error-state text-center mt-4">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 2.5rem; color: #EF4444;"></i>
+                    <h5 class="mt-2 text-white">Analisis AI Gagal</h5>
+                    <p style="font-size: 0.85rem; max-width: 450px; margin: 8px auto;">${err.message || 'Pastikan Gemini API Key Anda valid dan koneksi internet Anda lancar.'}</p>
+                    <button class="btn btn-sync mt-3" id="btn-retry-ai"><i class="fa-solid fa-arrows-rotate"></i> Coba Lagi</button>
+                </div>
+            `;
+            
+            document.getElementById('btn-retry-ai').addEventListener('click', () => btnRunAi.click());
+        } finally {
+            btnRunAi.disabled = false;
+            btnRunAi.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Jalankan Rekomendasi Formasi AI`;
+        }
+    });
+
+    const renderAiResponse = (markdownText) => {
+        let html = markdownText
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/^# (.*$)/gim, '<h3>$1</h3>')
+            .replace(/^## (.*$)/gim, '<h3>$1</h3>')
+            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/^- (.*$)/gim, '<li>$1</li>')
+            .replace(/^\* (.*$)/gim, '<li>$1</li>')
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>');
+
+        html = html.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
+        
+        aiConsoleOutput.innerHTML = `<div class="ai-output-content text-left animate-slide-up"><p>${html}</p></div>`;
+        btnCopyAiOutput.classList.remove('hidden');
+
+        btnCopyAiOutput.onclick = () => {
+            navigator.clipboard.writeText(markdownText).then(() => {
+                const origText = btnCopyAiOutput.innerHTML;
+                btnCopyAiOutput.innerHTML = `<i class="fa-solid fa-check text-emerald"></i> Tersalin!`;
+                setTimeout(() => {
+                    btnCopyAiOutput.innerHTML = origText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text:', err);
+                alert('Gagal menyalin rekomendasi ke clipboard.');
+            });
+        };
+    };
 
     // --- APP INITIALIZATION ---
     loadCachedData();
