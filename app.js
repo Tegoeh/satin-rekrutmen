@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let admissions = JSON.parse(localStorage.getItem('rekrutmen_admissions')) || {};
     let schoolChartInstance = null;
     let positionChartInstance = null;
+    let lastApplicantsStr = '';
+    let lastAdmissionsStr = '';
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9z00JrLv9Molf8m4AiByB4ZMPzkb3nOgMnWoez06vSRe8VSuSRTKzIClqfnyGnHXXAAjtZDKs4izE/pub?gid=643422287&single=true&output=csv';
     const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbzmv_C2ZNarXxP0_VfQaed_ch3rt02gDuxSwxTd-BX3p037XXJXr43mI3U_bPq0Qppg-g/exec';
 
@@ -277,12 +279,27 @@ document.addEventListener('DOMContentLoaded', () => {
             updateLastSyncUI(new Date());
             showError(false);
             
-            // Build UI Filters & Render
-            populateFilterOptions();
-            renderUI();
-            calculateStatistics();
-            renderCharts();
-            updateStrukturOrg();
+            // Check if data actually changed to prevent expensive DOM reflows on mobile
+            const currentApplicantsStr = JSON.stringify(applicants);
+            const currentAdmissionsStr = JSON.stringify(admissions);
+            const isDataChanged = currentApplicantsStr !== lastApplicantsStr || currentAdmissionsStr !== lastAdmissionsStr;
+
+            if (isDataChanged || !isBackground) {
+                lastApplicantsStr = currentApplicantsStr;
+                lastAdmissionsStr = currentAdmissionsStr;
+
+                // Build UI Filters & Render
+                populateFilterOptions();
+                renderUI();
+                calculateStatistics();
+                
+                // Only render charts if currently active to save mobile CPU
+                if (activeTab === 'statistik-tab') {
+                    renderCharts();
+                }
+                
+                updateStrukturOrg();
+            }
 
         } catch (err) {
             clearTimeout(timeoutId);
@@ -307,6 +324,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (cached) {
             applicants = JSON.parse(cached);
+            lastApplicantsStr = JSON.stringify(applicants);
+            lastAdmissionsStr = JSON.stringify(admissions);
             updateLastSyncUI(new Date(cachedTime));
             populateFilterOptions();
             renderUI();

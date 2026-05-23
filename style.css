@@ -1431,13 +1431,28 @@ h1, h2, h3, h4 {
 }
 
 @media (max-width: 768px) {
+  :root {
+    --glass-blur: none !important; /* Mematikan backdrop-filter blur 20px yang sangat berat di HP */
+    --glass-bg: rgba(18, 24, 40, 0.95); /* Mengubah background menjadi solid agar keterbacaan tinggi */
+    --glass-border: rgba(255, 255, 255, 0.08);
+  }
+  
+  /* Hilangkan animasi masuk yang membebani rendering di browser mobile */
+  .animate-slide-up {
+    animation: none !important;
+    transform: none !important;
+  }
+  
   .welcome-banner {
     flex-direction: column;
     text-align: center;
     padding: 20px;
   }
+  
   .admission-btn-group {
     grid-template-columns: 1fr;
   }
 }
+
+
 
