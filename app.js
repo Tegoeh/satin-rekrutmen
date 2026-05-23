@@ -1154,7 +1154,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const poExcerpt = `
 KRITERIA & TUPOKSI JABATAN PENGURUS SATIN (Satuan Inti PMR Wira Jembrana) 2026/2027:
-1. Ketua Umum: Teguh (Telah Diisi). Memimpin, mengarahkan tupoksi BPH, berkoordinasi dengan PMI & FORPIS.
+1. Ketua Umum: I Komang Teguh Karunia Krisnha (Telah Diisi). Memimpin, mengarahkan tupoksi BPH, berkoordinasi dengan PMI & FORPIS.
 2. Wakil Ketua I & II: Mewakili Ketua Umum, mendelegasikan tugas ke bidang apabila berhalangan. Cocok untuk calon dengan jiwa kepemimpinan tinggi dan komitmen kuat.
 3. Sekretaris I: Surat-menyurat, koordinasi mobilisasi/penugasan anggota, mendata keaktifan dan absensi saat bertugas. Membutuhkan ketelitian tinggi.
 4. Sekretaris II: Pelaporan kegiatan bidang, mencatat hasil rapat (notulensi).
@@ -1183,7 +1183,7 @@ Berikut adalah data seluruh Calon Pengurus yang mendaftar:
 ${JSON.stringify(compactApplicants, null, 2)}
 
 Petunjuk Analisis Khusus:
-1. Ketua Umum adalah Teguh (tidak perlu diganti).
+1. Ketua Umum adalah I Komang Teguh Karunia Krisnha (tidak perlu diganti).
 2. Tentukan rekomendasi ideal untuk jabatan:
    - Wakil Ketua I & II (Cari calon yang komitmennya sangat tinggi dan menunjukkan visi kepemimpinan).
    - Sekretaris I & II (Cari yang teliti, rapi, dan teratur).
