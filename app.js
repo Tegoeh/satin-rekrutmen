@@ -219,25 +219,37 @@ document.addEventListener('DOMContentLoaded', () => {
         const processed = {};
         const filledPositions = [];
 
-        applicants.forEach(app => {
-            const adm = admissions[app.nama];
-            if (adm) {
-                const status = adm.status;
-                const jabatan = adm.jabatan;
-                let isCadangan = false;
+        // 1. Identifikasi status cadangan berdasarkan urutan pemilihan keputusan admin di admissions
+        const admissionsCadanganMap = {};
+        Object.entries(admissions).forEach(([name, data]) => {
+            const status = data.status;
+            const jabatan = data.jabatan;
+            let isCadangan = false;
 
-                if ((status === 'diterima' || status === 'diterima-dirubah') && jabatan) {
-                    if (filledPositions.includes(jabatan)) {
-                        isCadangan = true;
-                    } else {
-                        filledPositions.push(jabatan);
-                    }
+            if ((status === 'diterima' || status === 'diterima-dirubah') && jabatan) {
+                if (filledPositions.includes(jabatan)) {
+                    isCadangan = true;
+                } else {
+                    filledPositions.push(jabatan);
                 }
+            }
+            admissionsCadanganMap[cleanName(name)] = isCadangan;
+        });
 
+        // 2. Petakan data keputusan yang sudah dibersihkan namanya ke processedAdmissions pendaftar
+        const cleanAdmissions = {};
+        Object.entries(admissions).forEach(([name, data]) => {
+            cleanAdmissions[cleanName(name)] = data;
+        });
+
+        applicants.forEach(app => {
+            const cleanedAppName = cleanName(app.nama);
+            const adm = cleanAdmissions[cleanedAppName];
+            if (adm) {
                 processed[app.nama] = {
-                    status: status,
-                    jabatan: jabatan,
-                    isCadangan: isCadangan
+                    status: adm.status,
+                    jabatan: adm.jabatan,
+                    isCadangan: admissionsCadanganMap[cleanedAppName] || false
                 };
             } else {
                 processed[app.nama] = {
