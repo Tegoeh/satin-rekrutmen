@@ -966,11 +966,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (card) card.classList.remove('filled');
             }
 
-            // Cari nama-nama cadangan untuk posisi ini (must be cadangan, i.e., isCadangan === true)
+            // Cari nama-nama cadangan untuk posisi ini (must be cadangan, i.e., status === 'diterima-cadangan')
             const reserveNames = Object.keys(processedAdmissions).filter(
-                name => (processedAdmissions[name].status === 'diterima' || processedAdmissions[name].status === 'diterima-dirubah') &&
-                        roles.includes(processedAdmissions[name].jabatan) &&
-                        processedAdmissions[name].isCadangan
+                name => processedAdmissions[name].status === 'diterima-cadangan' &&
+                        roles.includes(processedAdmissions[name].jabatan)
             );
 
             // Buat atau bersihkan kontainer cadangan dinamis
@@ -1002,11 +1001,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Render DYNAMIC ANGGOTA (BIDANG & KOORWIL - MULTI PERSON)
         const anggotaMappings = {
-            'slot-anggota-bid-organisasi': ['Anggota Bid. Organisasi'],
-            'slot-anggota-bid-pengembangan-diri': ['Anggota Bid. Pengembangan Diri'],
-            'slot-anggota-bid-humas': ['Anggota Bid. HUMAS', 'Anggota Bid. Humas'],
-            'slot-anggota-bid-pengabdian-masyarakat': ['Anggota Bid. Pengabdian Masyarakat'],
-            'slot-anggota-bid-kewirausahaan': ['Anggota Bid. Kewirausahaan', 'Anggota Bid. Penggalian Dana'],
+            'slot-anggota-bid-organisasi': ['Anggota Bid. Organisasi', 'Anggota Bidang Organisasi'],
+            'slot-anggota-bid-pengembangan-diri': ['Anggota Bid. Pengembangan Diri', 'Anggota Bidang Pengembangan Diri'],
+            'slot-anggota-bid-humas': ['Anggota Bid. HUMAS', 'Anggota Bid. Humas', 'Anggota Bidang Humas', 'Anggota Bidang HUMAS'],
+            'slot-anggota-bid-pengabdian-masyarakat': ['Anggota Bid. Pengabdian Masyarakat', 'Anggota Bidang Pengabdian Masyarakat'],
+            'slot-anggota-bid-kewirausahaan': ['Anggota Bid. Kewirausahaan', 'Anggota Bidang Kewirausahaan', 'Anggota Bid. Penggalian Dana', 'Anggota Bidang Penggalian Dana'],
             'slot-anggota-wilayah-pekutatan': ['Anggota Wilayah Pekutatan', 'Anggota Koorwil Pekutatan'],
             'slot-anggota-wilayah-jembrana': ['Anggota Wilayah Jembrana', 'Anggota Koorwil Jembrana'],
             'slot-anggota-wilayah-negara': ['Anggota Wilayah Negara', 'Anggota Koorwil Negara'],
