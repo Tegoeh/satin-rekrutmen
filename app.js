@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeTab = 'pendaftar-tab'; // 'pendaftar-tab' | 'statistik-tab' | 'struktur-tab'
     let admissions = JSON.parse(localStorage.getItem('rekrutmen_admissions')) || {};
     let processedAdmissions = {};
+    let gridItemsToShow = 12; // Batas render kartu awal
+    let tableItemsToShow = 25; // Batas render baris tabel awal
     let schoolChartInstance = null;
     let positionChartInstance = null;
     let lastApplicantsStr = '';
@@ -518,7 +520,9 @@ document.addEventListener('DOMContentLoaded', () => {
         tableViewContainer.classList.add('hidden');
         gridViewContainer.innerHTML = '';
 
-        data.forEach(app => {
+        const visibleData = data.slice(0, gridItemsToShow);
+
+        visibleData.forEach(app => {
             const initials = app.nama.split(' ').map(p => p.charAt(0)).slice(0, 2).join('').toUpperCase();
             const commitClass = app.komitmen >= 8 ? 'commitment-high' : app.komitmen >= 5 ? 'commitment-medium' : 'commitment-low';
             
@@ -569,8 +573,25 @@ document.addEventListener('DOMContentLoaded', () => {
             gridViewContainer.insertAdjacentHTML('beforeend', cardHtml);
         });
 
+        // Tampilkan tombol Load More jika ada sisa data yang belum dirender
+        if (data.length > gridItemsToShow) {
+            const loadMoreHtml = `
+                <div class="load-more-container" style="grid-column: 1 / -1; display: flex; justify-content: center; margin-top: 24px; margin-bottom: 12px; width: 100%;">
+                    <button class="btn-load-more" id="btn-load-more-grid">
+                        <i class="fa-solid fa-angles-down animate-bounce-slow"></i> Muat Lebih Banyak (${data.length - gridItemsToShow} orang tersisa)
+                    </button>
+                </div>
+            `;
+            gridViewContainer.insertAdjacentHTML('beforeend', loadMoreHtml);
+            
+            document.getElementById('btn-load-more-grid').addEventListener('click', () => {
+                gridItemsToShow += 12;
+                renderGridView(data);
+            });
+        }
+
         // Add event listeners to buttons
-        document.querySelectorAll('.btn-detail').forEach(btn => {
+        document.querySelectorAll('#grid-view-container .btn-detail').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = parseInt(e.target.dataset.id, 10);
                 openApplicantDetail(id);
@@ -583,7 +604,15 @@ document.addEventListener('DOMContentLoaded', () => {
         tableViewContainer.classList.remove('hidden');
         tableBody.innerHTML = '';
 
-        data.forEach((app, idx) => {
+        // Hapus tombol Load More tabel yang lama jika ada
+        const existingLoadMore = document.getElementById('table-load-more-container');
+        if (existingLoadMore) {
+            existingLoadMore.remove();
+        }
+
+        const visibleData = data.slice(0, tableItemsToShow);
+
+        visibleData.forEach((app, idx) => {
             const commitClass = app.komitmen >= 8 ? 'commitment-high' : app.komitmen >= 5 ? 'commitment-medium' : 'commitment-low';
             
             const adm = processedAdmissions[app.nama] || { status: 'belum', jabatan: '', isCadangan: false };
@@ -625,6 +654,23 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             tableBody.insertAdjacentHTML('beforeend', rowHtml);
         });
+
+        // Tampilkan tombol Load More jika ada sisa data
+        if (data.length > tableItemsToShow) {
+            const loadMoreHtml = `
+                <div id="table-load-more-container" style="display: flex; justify-content: center; margin-top: 24px; margin-bottom: 12px; width: 100%;">
+                    <button class="btn-load-more" id="btn-load-more-table">
+                        <i class="fa-solid fa-angles-down animate-bounce-slow"></i> Muat Lebih Banyak (${data.length - tableItemsToShow} orang tersisa)
+                    </button>
+                </div>
+            `;
+            tableViewContainer.insertAdjacentHTML('beforeend', loadMoreHtml);
+            
+            document.getElementById('btn-load-more-table').addEventListener('click', () => {
+                tableItemsToShow += 25;
+                renderTableView(data);
+            });
+        }
 
         // Add event listeners to table buttons
         document.querySelectorAll('.applicants-table .btn-detail').forEach(btn => {
@@ -747,10 +793,16 @@ document.addEventListener('DOMContentLoaded', () => {
     btnRefresh.addEventListener('click', fetchData);
     btnRetry.addEventListener('click', fetchData);
 
-    searchInput.addEventListener('input', renderUI);
-    filterPosisi.addEventListener('change', renderUI);
-    filterSekolah.addEventListener('change', renderUI);
-    sortSelect.addEventListener('change', renderUI);
+    const handleFilterChange = () => {
+        gridItemsToShow = 12;
+        tableItemsToShow = 25;
+        renderUI();
+    };
+
+    searchInput.addEventListener('input', handleFilterChange);
+    filterPosisi.addEventListener('change', handleFilterChange);
+    filterSekolah.addEventListener('change', handleFilterChange);
+    sortSelect.addEventListener('change', handleFilterChange);
 
     viewGridBtn.addEventListener('click', () => {
         activeView = 'grid';
@@ -1459,11 +1511,11 @@ Berikan analisis dalam Bahasa Indonesia yang sangat profesional, objektif, takti
     // --- APP INITIALIZATION ---
     loadCachedData();
 
-    // --- AUTO-UPDATE POLLING (Every 15 seconds for real-time synchronization) ---
+    // --- AUTO-UPDATE POLLING (Every 30 seconds for real-time synchronization) ---
     setInterval(() => {
         // Only trigger background sync if the loader is hidden and page is active
         if (loadingOverlay.classList.contains('hidden') && !document.hidden) {
             fetchData(true);
         }
-    }, 15000);
+    }, 30000);
 });
