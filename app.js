@@ -217,26 +217,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- PROCESS ADMISSIONS LOGIC (CADANGAN DUPLICATE DETECTOR) ---
     const getProcessedAdmissions = () => {
         const processed = {};
-        const filledPositions = [];
 
-        // 1. Identifikasi status cadangan berdasarkan urutan pemilihan keputusan admin di admissions
-        const admissionsCadanganMap = {};
-        Object.entries(admissions).forEach(([name, data]) => {
-            const status = data.status;
-            const jabatan = data.jabatan;
-            let isCadangan = false;
-
-            if ((status === 'diterima' || status === 'diterima-dirubah') && jabatan) {
-                if (filledPositions.includes(jabatan)) {
-                    isCadangan = true;
-                } else {
-                    filledPositions.push(jabatan);
-                }
-            }
-            admissionsCadanganMap[cleanName(name)] = isCadangan;
-        });
-
-        // 2. Petakan data keputusan yang sudah dibersihkan namanya ke processedAdmissions pendaftar
+        // Petakan data keputusan yang sudah dibersihkan namanya ke processedAdmissions pendaftar
         const cleanAdmissions = {};
         Object.entries(admissions).forEach(([name, data]) => {
             cleanAdmissions[cleanName(name)] = data;
@@ -249,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 processed[app.nama] = {
                     status: adm.status,
                     jabatan: adm.jabatan,
-                    isCadangan: admissionsCadanganMap[cleanedAppName] || false
+                    isCadangan: (adm.status === 'diterima-cadangan')
                 };
             } else {
                 processed[app.nama] = {
@@ -544,11 +526,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let statusText = '';
             if (adm.status === 'diterima') statusText = 'Diterima';
             else if (adm.status === 'diterima-dirubah') statusText = adm.jabatan;
+            else if (adm.status === 'diterima-cadangan') statusText = `${adm.jabatan} (Cadangan)`;
             else if (adm.status === 'ditolak') statusText = 'Ditolak';
-
-            if (adm.isCadangan && (adm.status === 'diterima' || adm.status === 'diterima-dirubah')) {
-                statusText += ' (Cadangan)';
-            }
 
             const cardHtml = `
                 <div class="applicant-card">
@@ -611,11 +590,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let statusText = 'Belum';
             if (adm.status === 'diterima') statusText = 'Diterima';
             else if (adm.status === 'diterima-dirubah') statusText = `Dirubah: ${adm.jabatan}`;
+            else if (adm.status === 'diterima-cadangan') statusText = `Cadangan: ${adm.jabatan}`;
             else if (adm.status === 'ditolak') statusText = 'Ditolak';
-
-            if (adm.isCadangan && (adm.status === 'diterima' || adm.status === 'diterima-dirubah')) {
-                statusText += ' (Cadangan)';
-            }
 
             const rowHtml = `
                 <tr>
@@ -697,7 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Show/hide new role select
-        if (currentSelectedStatus === 'diterima-dirubah') {
+        if (currentSelectedStatus === 'diterima-dirubah' || currentSelectedStatus === 'diterima-cadangan') {
             newRoleContainer.classList.remove('hidden');
             newRoleDropdown.value = adm.jabatan || '';
         } else {
@@ -714,10 +690,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let assignedRole = '';
             if (currentSelectedStatus === 'diterima') {
                 assignedRole = app.pilihan1;
-            } else if (currentSelectedStatus === 'diterima-dirubah') {
+            } else if (currentSelectedStatus === 'diterima-dirubah' || currentSelectedStatus === 'diterima-cadangan') {
                 assignedRole = newRoleDropdown.value;
                 if (!assignedRole) {
-                    alert('Silakan pilih jabatan baru terlebih dahulu!');
+                    alert('Silakan pilih jabatan terlebih dahulu!');
                     return;
                 }
             }
@@ -1113,7 +1089,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.target.classList.add('active');
             currentSelectedStatus = e.target.dataset.status;
             
-            if (currentSelectedStatus === 'diterima-dirubah') {
+            if (currentSelectedStatus === 'diterima-dirubah' || currentSelectedStatus === 'diterima-cadangan') {
                 newRoleContainer.classList.remove('hidden');
             } else {
                 newRoleContainer.classList.add('hidden');
