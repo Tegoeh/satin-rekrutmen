@@ -989,6 +989,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 el.textContent = 'Belum Terpilih';
                 if (card) card.classList.remove('filled');
             }
+
+            // Cari nama-nama cadangan untuk posisi ini (must be cadangan, i.e., isCadangan === true)
+            const reserveNames = Object.keys(processedAdmissions).filter(
+                name => (processedAdmissions[name].status === 'diterima' || processedAdmissions[name].status === 'diterima-dirubah') &&
+                        roles.includes(processedAdmissions[name].jabatan) &&
+                        processedAdmissions[name].isCadangan
+            );
+
+            // Buat atau bersihkan kontainer cadangan dinamis
+            let cadanganEl = document.getElementById(`cadangan-${slotId}`);
+            if (!cadanganEl) {
+                cadanganEl = document.createElement('div');
+                cadanganEl.id = `cadangan-${slotId}`;
+                cadanganEl.className = 'slot-cadangan-container';
+                el.parentNode.insertBefore(cadanganEl, el.nextSibling);
+            }
+
+            if (reserveNames.length > 0) {
+                cadanganEl.innerHTML = reserveNames.map(name => `<span class="cadangan-pill"><i class="fa-solid fa-user-clock"></i> Cadangan: ${name}</span>`).join('');
+                cadanganEl.classList.remove('hidden');
+                
+                // Tambahkan click listener untuk membuka profil pendaftar cadangan
+                cadanganEl.querySelectorAll('.cadangan-pill').forEach((pill, idx) => {
+                    pill.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const app = applicants.find(a => a.nama === reserveNames[idx]);
+                        if (app) openApplicantDetail(app.id);
+                    });
+                });
+            } else {
+                cadanganEl.innerHTML = '';
+                cadanganEl.classList.add('hidden');
+            }
         });
 
         // Render DYNAMIC ANGGOTA (BIDANG & KOORWIL - MULTI PERSON)

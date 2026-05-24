@@ -1983,6 +1983,41 @@ h1, h2, h3, h4 {
   color: var(--text-muted);
 }
 
+/* --- SLOT CADANGAN DYNAMIC STYLING --- */
+.slot-cadangan-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.cadangan-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 30px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #F59E0B;
+  cursor: pointer;
+  transition: var(--transition);
+  max-width: 95%;
+  text-align: center;
+}
+
+.cadangan-pill:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: #F59E0B;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.1);
+  transform: translateY(-1px);
+}
+
+
 
 
 
