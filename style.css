@@ -1903,5 +1903,86 @@ h1, h2, h3, h4 {
   letter-spacing: 0.5px;
 }
 
+/* --- DYNAMIC ANGGOTA SLOT STYLING --- */
+.struktur-section-divider {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  margin-top: 48px;
+  margin-bottom: 24px;
+}
+
+.struktur-section-divider::before,
+.struktur-section-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+}
+
+.struktur-section-divider span {
+  padding: 8px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.anggota-card {
+  min-height: 140px;
+  justify-content: flex-start;
+  align-items: stretch;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.01) !important;
+}
+
+.anggota-list {
+  list-style: none;
+  width: 100%;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.anggota-list li {
+  padding: 8px 12px;
+  border-radius: var(--radius-xs);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.anggota-list li:hover {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10B981;
+}
+
+.anggota-list li.no-member {
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  font-weight: 500;
+  font-style: italic;
+  cursor: default;
+}
+
+.anggota-list li.no-member:hover {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+}
+
+
 
 

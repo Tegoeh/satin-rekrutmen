@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeView = 'grid'; // 'grid' | 'table'
     let activeTab = 'pendaftar-tab'; // 'pendaftar-tab' | 'statistik-tab' | 'struktur-tab'
     let admissions = JSON.parse(localStorage.getItem('rekrutmen_admissions')) || {};
+    let processedAdmissions = {};
     let schoolChartInstance = null;
     let positionChartInstance = null;
     let lastApplicantsStr = '';
@@ -213,6 +214,42 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${datePart}, ${timeFormatted}`;
     };
 
+    // --- PROCESS ADMISSIONS LOGIC (CADANGAN DUPLICATE DETECTOR) ---
+    const getProcessedAdmissions = () => {
+        const processed = {};
+        const filledPositions = [];
+
+        applicants.forEach(app => {
+            const adm = admissions[app.nama];
+            if (adm) {
+                const status = adm.status;
+                const jabatan = adm.jabatan;
+                let isCadangan = false;
+
+                if ((status === 'diterima' || status === 'diterima-dirubah') && jabatan) {
+                    if (filledPositions.includes(jabatan)) {
+                        isCadangan = true;
+                    } else {
+                        filledPositions.push(jabatan);
+                    }
+                }
+
+                processed[app.nama] = {
+                    status: status,
+                    jabatan: jabatan,
+                    isCadangan: isCadangan
+                };
+            } else {
+                processed[app.nama] = {
+                    status: 'belum',
+                    jabatan: '',
+                    isCadangan: false
+                };
+            }
+        });
+        return processed;
+    };
+
     // --- FETCH & LOAD DATA ---
     const fetchData = async (isBackground = false) => {
         if (!isBackground) {
@@ -290,6 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.warn('Menggunakan database lokal karena database pusat sedang offline:', dbResult.reason);
             }
 
+            processedAdmissions = getProcessedAdmissions();
             localStorage.setItem('rekrutmen_last_sync', new Date().toISOString());
 
             updateLastSyncUI(new Date());
@@ -342,6 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
             applicants = JSON.parse(cached);
             lastApplicantsStr = JSON.stringify(applicants);
             lastAdmissionsStr = JSON.stringify(admissions);
+            processedAdmissions = getProcessedAdmissions();
             updateLastSyncUI(new Date(cachedTime));
             populateFilterOptions();
             renderUI();
@@ -489,11 +528,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const initials = app.nama.split(' ').map(p => p.charAt(0)).slice(0, 2).join('').toUpperCase();
             const commitClass = app.komitmen >= 8 ? 'commitment-high' : app.komitmen >= 5 ? 'commitment-medium' : 'commitment-low';
             
-            const adm = admissions[app.nama] || { status: 'belum', jabatan: '' };
+            const adm = processedAdmissions[app.nama] || { status: 'belum', jabatan: '', isCadangan: false };
             let statusText = '';
             if (adm.status === 'diterima') statusText = 'Diterima';
             else if (adm.status === 'diterima-dirubah') statusText = adm.jabatan;
             else if (adm.status === 'ditolak') statusText = 'Ditolak';
+
+            if (adm.isCadangan && (adm.status === 'diterima' || adm.status === 'diterima-dirubah')) {
+                statusText += ' (Cadangan)';
+            }
 
             const cardHtml = `
                 <div class="applicant-card">
@@ -552,11 +595,15 @@ document.addEventListener('DOMContentLoaded', () => {
         data.forEach((app, idx) => {
             const commitClass = app.komitmen >= 8 ? 'commitment-high' : app.komitmen >= 5 ? 'commitment-medium' : 'commitment-low';
             
-            const adm = admissions[app.nama] || { status: 'belum', jabatan: '' };
+            const adm = processedAdmissions[app.nama] || { status: 'belum', jabatan: '', isCadangan: false };
             let statusText = 'Belum';
             if (adm.status === 'diterima') statusText = 'Diterima';
             else if (adm.status === 'diterima-dirubah') statusText = `Dirubah: ${adm.jabatan}`;
             else if (adm.status === 'ditolak') statusText = 'Ditolak';
+
+            if (adm.isCadangan && (adm.status === 'diterima' || adm.status === 'diterima-dirubah')) {
+                statusText += ' (Cadangan)';
+            }
 
             const rowHtml = `
                 <tr>
@@ -626,7 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalHarapan.textContent = app.harapan || 'Tidak dicantumkan.';
 
         // Load selection decision
-        const adm = admissions[app.nama] || { status: 'belum', jabatan: '' };
+        const adm = processedAdmissions[app.nama] || { status: 'belum', jabatan: '', isCadangan: false };
         currentSelectedStatus = adm.status;
         
         // Reset active buttons in modal
@@ -670,6 +717,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Save to local storage cache immediately
             localStorage.setItem('rekrutmen_admissions', JSON.stringify(admissions));
+            processedAdmissions = getProcessedAdmissions();
             
             // Re-render UI immediately (0ms feedback latency)
             renderUI();
@@ -883,7 +931,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- STRUKTUR ORGANISASI (BPH & KOORWIL LIVE CHART) ---
+    // --- STRUKTUR ORGANISASI (BPH, KOORWIL, ANGGOTA LIVE CHART) ---
     const updateStrukturOrg = () => {
         // Map slot HTML element IDs to PO jabatans/roles (supporting both string and array for backwards compatibility)
         const roleMappings = {
@@ -905,7 +953,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'slot-koor-wilayah-mendoyo': ['Koor. Wilayah Mendoyo']
         };
  
-        // Scan admissions map for filled slots
+        // Scan admissions map for filled slots (UTAMA ONLY - NO CADANGAN)
         Object.entries(roleMappings).forEach(([slotId, roleName]) => {
             const el = document.getElementById(slotId);
             if (!el) return;
@@ -913,10 +961,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Normalize role name to array
             const roles = Array.isArray(roleName) ? roleName : [roleName];
  
-            // Find applicant assigned to this role
-            const assignedName = Object.keys(admissions).find(
-                name => (admissions[name].status === 'diterima' || admissions[name].status === 'diterima-dirubah') &&
-                        roles.includes(admissions[name].jabatan)
+            // Find applicant assigned to this role (must be Utama, i.e., !isCadangan)
+            const assignedName = Object.keys(processedAdmissions).find(
+                name => (processedAdmissions[name].status === 'diterima' || processedAdmissions[name].status === 'diterima-dirubah') &&
+                        roles.includes(processedAdmissions[name].jabatan) &&
+                        !processedAdmissions[name].isCadangan
             );
  
             const card = el.closest('.struktur-slot-card');
@@ -926,6 +975,55 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (card) card.classList.add('filled');
             } else {
                 el.textContent = 'Belum Terpilih';
+                if (card) card.classList.remove('filled');
+            }
+        });
+
+        // Render DYNAMIC ANGGOTA (BIDANG & KOORWIL - MULTI PERSON)
+        const anggotaMappings = {
+            'slot-anggota-bid-organisasi': ['Anggota Bid. Organisasi'],
+            'slot-anggota-bid-pengembangan-diri': ['Anggota Bid. Pengembangan Diri'],
+            'slot-anggota-bid-humas': ['Anggota Bid. HUMAS', 'Anggota Bid. Humas'],
+            'slot-anggota-bid-pengabdian-masyarakat': ['Anggota Bid. Pengabdian Masyarakat'],
+            'slot-anggota-bid-kewirausahaan': ['Anggota Bid. Kewirausahaan', 'Anggota Bid. Penggalian Dana'],
+            'slot-anggota-wilayah-pekutatan': ['Anggota Wilayah Pekutatan', 'Anggota Koorwil Pekutatan'],
+            'slot-anggota-wilayah-jembrana': ['Anggota Wilayah Jembrana', 'Anggota Koorwil Jembrana'],
+            'slot-anggota-wilayah-negara': ['Anggota Wilayah Negara', 'Anggota Koorwil Negara'],
+            'slot-anggota-wilayah-melaya': ['Anggota Wilayah Melaya', 'Anggota Koorwil Melaya'],
+            'slot-anggota-wilayah-mendoyo': ['Anggota Wilayah Mendoyo', 'Anggota Koorwil Mendoyo']
+        };
+
+        Object.entries(anggotaMappings).forEach(([slotId, roleNames]) => {
+            const ul = document.getElementById(slotId);
+            if (!ul) return;
+
+            const roles = Array.isArray(roleNames) ? roleNames : [roleNames];
+            
+            // Find all accepted applicants for this role (Utama only, i.e., !isCadangan)
+            const members = Object.keys(processedAdmissions).filter(
+                name => (processedAdmissions[name].status === 'diterima' || processedAdmissions[name].status === 'diterima-dirubah') &&
+                        roles.includes(processedAdmissions[name].jabatan) &&
+                        !processedAdmissions[name].isCadangan
+            );
+
+            const card = ul.closest('.struktur-slot-card');
+
+            if (members.length > 0) {
+                ul.innerHTML = '';
+                members.forEach(name => {
+                    const li = document.createElement('li');
+                    li.textContent = name;
+                    // Add click handler to open details
+                    li.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Prevent card bubble click
+                        const app = applicants.find(a => a.nama === name);
+                        if (app) openApplicantDetail(app.id);
+                    });
+                    ul.appendChild(li);
+                });
+                if (card) card.classList.add('filled');
+            } else {
+                ul.innerHTML = '<li class="no-member">Belum Terpilih</li>';
                 if (card) card.classList.remove('filled');
             }
         });
