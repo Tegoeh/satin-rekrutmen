@@ -10,8 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeTab = 'pendaftar-tab'; // 'pendaftar-tab' | 'statistik-tab' | 'struktur-tab'
     let admissions = JSON.parse(localStorage.getItem('rekrutmen_admissions')) || {};
     let processedAdmissions = {};
-    let gridItemsToShow = 12; // Batas render kartu awal
-    let tableItemsToShow = 25; // Batas render baris tabel awal
+    let activeRenderTimeout = null; // Melacak rendering bertahap aktif agar tidak tumpang tindih
     let schoolChartInstance = null;
     let positionChartInstance = null;
     let lastApplicantsStr = '';
@@ -520,83 +519,88 @@ document.addEventListener('DOMContentLoaded', () => {
         tableViewContainer.classList.add('hidden');
         gridViewContainer.innerHTML = '';
 
-        const visibleData = data.slice(0, gridItemsToShow);
-
-        visibleData.forEach(app => {
-            const initials = app.nama.split(' ').map(p => p.charAt(0)).slice(0, 2).join('').toUpperCase();
-            const commitClass = app.komitmen >= 8 ? 'commitment-high' : app.komitmen >= 5 ? 'commitment-medium' : 'commitment-low';
-            
-            const adm = processedAdmissions[app.nama] || { status: 'belum', jabatan: '', isCadangan: false };
-            let statusText = '';
-            if (adm.status === 'diterima') statusText = 'Diterima';
-            else if (adm.status === 'diterima-dirubah') statusText = adm.jabatan;
-            else if (adm.status === 'diterima-cadangan') statusText = `${adm.jabatan} (Cadangan)`;
-            else if (adm.status === 'ditolak') statusText = 'Ditolak';
-
-            const cardHtml = `
-                <div class="applicant-card">
-                    <span class="card-status-pill ${adm.status}">${statusText}</span>
-                    <div class="card-header">
-                        <div class="applicant-avatar">${initials}</div>
-                        <div class="applicant-title-info">
-                            <h4>${app.nama}</h4>
-                            <p><i class="fa-solid fa-graduation-cap"></i> ${app.sekolah}</p>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="position-badges-card">
-                            <div class="card-badge-line">
-                                <span class="label-num label-num-1">1</span>
-                                <span class="position-text">${app.pilihan1}</span>
-                            </div>
-                            <div class="card-badge-line">
-                                <span class="label-num label-num-2">2</span>
-                                <span class="position-text">${app.pilihan2 || '-'}</span>
-                            </div>
-                        </div>
-                        <div class="commitment-scale-block">
-                            <div class="scale-header">
-                                <span>Komitmen</span>
-                                <span class="commitment-badge ${commitClass}">${app.komitmen}/10</span>
-                            </div>
-                            <div class="commitment-bar-bg">
-                                <div class="commitment-bar-fill ${commitClass}" style="width: ${app.komitmen * 10}%"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-footer">
-                        <span class="timestamp"><i class="fa-regular fa-clock" style="margin-right: 4px;"></i>${formatTimestamp(app.timestamp)}</span>
-                        <button class="btn btn-detail" data-id="${app.id}">Detail Profil</button>
-                    </div>
-                </div>
-            `;
-            gridViewContainer.insertAdjacentHTML('beforeend', cardHtml);
-        });
-
-        // Tampilkan tombol Load More jika ada sisa data yang belum dirender
-        if (data.length > gridItemsToShow) {
-            const loadMoreHtml = `
-                <div class="load-more-container" style="grid-column: 1 / -1; display: flex; justify-content: center; margin-top: 24px; margin-bottom: 12px; width: 100%;">
-                    <button class="btn-load-more" id="btn-load-more-grid">
-                        <i class="fa-solid fa-angles-down animate-bounce-slow"></i> Muat Lebih Banyak (${data.length - gridItemsToShow} orang tersisa)
-                    </button>
-                </div>
-            `;
-            gridViewContainer.insertAdjacentHTML('beforeend', loadMoreHtml);
-            
-            document.getElementById('btn-load-more-grid').addEventListener('click', () => {
-                gridItemsToShow += 12;
-                renderGridView(data);
-            });
+        // Batalkan rendering bertahap sebelumnya jika ada yang sedang berjalan
+        if (activeRenderTimeout) {
+            clearTimeout(activeRenderTimeout);
+            activeRenderTimeout = null;
         }
 
-        // Add event listeners to buttons
-        document.querySelectorAll('#grid-view-container .btn-detail').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = parseInt(e.target.dataset.id, 10);
-                openApplicantDetail(id);
+        const chunkSize = 12;
+        let currentIndex = 0;
+
+        const renderNextChunk = () => {
+            const endLimit = Math.min(currentIndex + chunkSize, data.length);
+            const chunkData = data.slice(currentIndex, endLimit);
+
+            let htmlString = '';
+            chunkData.forEach(app => {
+                const initials = app.nama.split(' ').map(p => p.charAt(0)).slice(0, 2).join('').toUpperCase();
+                const commitClass = app.komitmen >= 8 ? 'commitment-high' : app.komitmen >= 5 ? 'commitment-medium' : 'commitment-low';
+                
+                const adm = processedAdmissions[app.nama] || { status: 'belum', jabatan: '', isCadangan: false };
+                let statusText = '';
+                if (adm.status === 'diterima') statusText = 'Diterima';
+                else if (adm.status === 'diterima-dirubah') statusText = adm.jabatan;
+                else if (adm.status === 'diterima-cadangan') statusText = `${adm.jabatan} (Cadangan)`;
+                else if (adm.status === 'ditolak') statusText = 'Ditolak';
+
+                htmlString += `
+                    <div class="applicant-card" data-id="${app.id}">
+                        <span class="card-status-pill ${adm.status}">${statusText}</span>
+                        <div class="card-header">
+                            <div class="applicant-avatar">${initials}</div>
+                            <div class="applicant-title-info">
+                                <h4>${app.nama}</h4>
+                                <p><i class="fa-solid fa-graduation-cap"></i> ${app.sekolah}</p>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="position-badges-card">
+                                <div class="card-badge-line">
+                                    <span class="label-num label-num-1">1</span>
+                                    <span class="position-text">${app.pilihan1}</span>
+                                </div>
+                                <div class="card-badge-line">
+                                    <span class="label-num label-num-2">2</span>
+                                    <span class="position-text">${app.pilihan2 || '-'}</span>
+                                </div>
+                            </div>
+                            <div class="commitment-scale-block">
+                                <div class="scale-header">
+                                    <span>Komitmen</span>
+                                    <span class="commitment-badge ${commitClass}">${app.komitmen}/10</span>
+                                </div>
+                                <div class="commitment-bar-bg">
+                                    <div class="commitment-bar-fill ${commitClass}" style="width: ${app.komitmen * 10}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <span class="timestamp"><i class="fa-regular fa-clock" style="margin-right: 4px;"></i>${formatTimestamp(app.timestamp)}</span>
+                            <button class="btn btn-detail" data-id="${app.id}">Detail Profil</button>
+                        </div>
+                    </div>
+                `;
             });
-        });
+
+            gridViewContainer.insertAdjacentHTML('beforeend', htmlString);
+
+            // Hubungkan event listener ke tombol detail yang baru dirender di chunk ini
+            gridViewContainer.querySelectorAll(`.applicant-card[data-id] .btn-detail`).forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.currentTarget.dataset.id, 10);
+                    openApplicantDetail(id);
+                });
+            });
+
+            currentIndex = endLimit;
+            if (currentIndex < data.length) {
+                activeRenderTimeout = setTimeout(renderNextChunk, 20);
+            }
+        };
+
+        // Mulai render chunk pertama secara sinkron untuk responsivitas instan
+        renderNextChunk();
     };
 
     const renderTableView = (data) => {
@@ -604,81 +608,87 @@ document.addEventListener('DOMContentLoaded', () => {
         tableViewContainer.classList.remove('hidden');
         tableBody.innerHTML = '';
 
-        // Hapus tombol Load More tabel yang lama jika ada
+        // Batalkan rendering bertahap sebelumnya jika ada yang sedang berjalan
+        if (activeRenderTimeout) {
+            clearTimeout(activeRenderTimeout);
+            activeRenderTimeout = null;
+        }
+
         const existingLoadMore = document.getElementById('table-load-more-container');
         if (existingLoadMore) {
             existingLoadMore.remove();
         }
 
-        const visibleData = data.slice(0, tableItemsToShow);
+        const chunkSize = 25;
+        let currentIndex = 0;
 
-        visibleData.forEach((app, idx) => {
-            const commitClass = app.komitmen >= 8 ? 'commitment-high' : app.komitmen >= 5 ? 'commitment-medium' : 'commitment-low';
-            
-            const adm = processedAdmissions[app.nama] || { status: 'belum', jabatan: '', isCadangan: false };
-            let statusText = 'Belum';
-            if (adm.status === 'diterima') statusText = 'Diterima';
-            else if (adm.status === 'diterima-dirubah') statusText = `Dirubah: ${adm.jabatan}`;
-            else if (adm.status === 'diterima-cadangan') statusText = `Cadangan: ${adm.jabatan}`;
-            else if (adm.status === 'ditolak') statusText = 'Ditolak';
+        const renderNextChunk = () => {
+            const endLimit = Math.min(currentIndex + chunkSize, data.length);
+            const chunkData = data.slice(currentIndex, endLimit);
 
-            const rowHtml = `
-                <tr>
-                    <td>${idx + 1}</td>
-                    <td class="table-nama-cell">
-                        <div class="table-nama-text">${app.nama}</div>
-                        <div class="table-timestamp-sub"><i class="fa-regular fa-clock" style="margin-right: 4px;"></i>${formatTimestamp(app.timestamp)}</div>
-                    </td>
-                    <td>${app.sekolah}</td>
-                    <td><span class="badge-position pilihan1">${app.pilihan1}</span></td>
-                    <td><span class="badge-position">${app.pilihan2 || '-'}</span></td>
-                    <td>
-                        <a href="https://wa.me/62${app.whatsapp.slice(1)}" target="_blank" class="table-whatsapp-link">
-                            <i class="fa-brands fa-whatsapp"></i> ${app.whatsapp}
-                        </a>
-                    </td>
-                    <td>
-                        <span class="commitment-badge ${commitClass}" style="display:inline-block; text-align:center; min-width:50px;">
-                            ${app.komitmen}/10
-                        </span>
-                    </td>
-                    <td>
-                        <span class="table-status-badge ${adm.status}">${statusText}</span>
-                    </td>
-                    <td>
-                        <button class="btn btn-detail" data-id="${app.id}" style="padding: 4px 10px; font-size: 0.75rem;">
-                            Buka
-                        </button>
-                    </td>
-                </tr>
-            `;
-            tableBody.insertAdjacentHTML('beforeend', rowHtml);
-        });
+            let htmlString = '';
+            chunkData.forEach((app, idx) => {
+                const commitClass = app.komitmen >= 8 ? 'commitment-high' : app.komitmen >= 5 ? 'commitment-medium' : 'commitment-low';
+                
+                const adm = processedAdmissions[app.nama] || { status: 'belum', jabatan: '', isCadangan: false };
+                let statusText = 'Belum';
+                if (adm.status === 'diterima') statusText = 'Diterima';
+                else if (adm.status === 'diterima-dirubah') statusText = `Dirubah: ${adm.jabatan}`;
+                else if (adm.status === 'diterima-cadangan') statusText = `Cadangan: ${adm.jabatan}`;
+                else if (adm.status === 'ditolak') statusText = 'Ditolak';
 
-        // Tampilkan tombol Load More jika ada sisa data
-        if (data.length > tableItemsToShow) {
-            const loadMoreHtml = `
-                <div id="table-load-more-container" style="display: flex; justify-content: center; margin-top: 24px; margin-bottom: 12px; width: 100%;">
-                    <button class="btn-load-more" id="btn-load-more-table">
-                        <i class="fa-solid fa-angles-down animate-bounce-slow"></i> Muat Lebih Banyak (${data.length - tableItemsToShow} orang tersisa)
-                    </button>
-                </div>
-            `;
-            tableViewContainer.insertAdjacentHTML('beforeend', loadMoreHtml);
-            
-            document.getElementById('btn-load-more-table').addEventListener('click', () => {
-                tableItemsToShow += 25;
-                renderTableView(data);
+                const rowIdx = currentIndex + idx + 1;
+
+                htmlString += `
+                    <tr class="table-row-item" data-id="${app.id}">
+                        <td>${rowIdx}</td>
+                        <td class="table-nama-cell">
+                            <div class="table-nama-text">${app.nama}</div>
+                            <div class="table-timestamp-sub"><i class="fa-regular fa-clock" style="margin-right: 4px;"></i>${formatTimestamp(app.timestamp)}</div>
+                        </td>
+                        <td>${app.sekolah}</td>
+                        <td><span class="badge-position pilihan1">${app.pilihan1}</span></td>
+                        <td><span class="badge-position">${app.pilihan2 || '-'}</span></td>
+                        <td>
+                            <a href="https://wa.me/62${app.whatsapp.slice(1)}" target="_blank" class="table-whatsapp-link">
+                                <i class="fa-brands fa-whatsapp"></i> ${app.whatsapp}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="commitment-badge ${commitClass}" style="display:inline-block; text-align:center; min-width:50px;">
+                                ${app.komitmen}/10
+                            </span>
+                        </td>
+                        <td>
+                            <span class="table-status-badge ${adm.status}">${statusText}</span>
+                        </td>
+                        <td>
+                            <button class="btn btn-detail" data-id="${app.id}" style="padding: 4px 10px; font-size: 0.75rem;">
+                                Buka
+                            </button>
+                        </td>
+                    </tr>
+                `;
             });
-        }
 
-        // Add event listeners to table buttons
-        document.querySelectorAll('.applicants-table .btn-detail').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = parseInt(e.target.dataset.id, 10);
-                openApplicantDetail(id);
+            tableBody.insertAdjacentHTML('beforeend', htmlString);
+
+            // Hubungkan event listener ke tombol detail yang baru dirender di chunk ini
+            tableBody.querySelectorAll(`.table-row-item[data-id] .btn-detail`).forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.currentTarget.dataset.id, 10);
+                    openApplicantDetail(id);
+                });
             });
-        });
+
+            currentIndex = endLimit;
+            if (currentIndex < data.length) {
+                activeRenderTimeout = setTimeout(renderNextChunk, 20);
+            }
+        };
+
+        // Mulai render chunk pertama secara sinkron untuk responsivitas instan
+        renderNextChunk();
     };
 
     // --- MODAL UTILITIES ---
@@ -794,8 +804,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btnRetry.addEventListener('click', fetchData);
 
     const handleFilterChange = () => {
-        gridItemsToShow = 12;
-        tableItemsToShow = 25;
         renderUI();
     };
 
