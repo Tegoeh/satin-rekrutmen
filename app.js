@@ -67,7 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSaveDecision = document.getElementById('btn-save-decision');
     const newRoleContainer = document.getElementById('new-role-container');
     const newRoleDropdown = document.getElementById('new-role-dropdown');
+    const persetujuanContainer = document.getElementById('persetujuan-container');
     let currentSelectedStatus = 'belum'; // Temp BPH decision state
+    let currentPersetujuanStatus = 'menunggu'; // Temp BPH agreement state
     let activeApplicant = null; // Currently opened applicant in detail modal
 
     // AI Formatur Assistant DOM Elements
@@ -233,13 +235,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 processed[app.nama] = {
                     status: adm.status,
                     jabatan: adm.jabatan,
-                    isCadangan: (adm.status === 'diterima-cadangan')
+                    isCadangan: (adm.status === 'diterima-cadangan'),
+                    persetujuan: adm.persetujuan || 'menunggu'
                 };
             } else {
                 processed[app.nama] = {
                     status: 'belum',
                     jabatan: '',
-                    isCadangan: false
+                    isCadangan: false,
+                    persetujuan: 'menunggu'
                 };
             }
         });
@@ -538,12 +542,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const initials = app.nama.split(' ').map(p => p.charAt(0)).slice(0, 2).join('').toUpperCase();
                 const commitClass = app.komitmen >= 8 ? 'commitment-high' : app.komitmen >= 5 ? 'commitment-medium' : 'commitment-low';
                 
-                const adm = processedAdmissions[app.nama] || { status: 'belum', jabatan: '', isCadangan: false };
+                const adm = processedAdmissions[app.nama] || { status: 'belum', jabatan: '', isCadangan: false, persetujuan: 'menunggu' };
                 let statusText = '';
-                if (adm.status === 'diterima') statusText = 'Diterima';
-                else if (adm.status === 'diterima-dirubah') statusText = adm.jabatan;
-                else if (adm.status === 'diterima-cadangan') statusText = `${adm.jabatan} (Cadangan)`;
-                else if (adm.status === 'ditolak') statusText = 'Ditolak';
+                if (adm.status === 'diterima') {
+                    const suffix = adm.persetujuan === 'fiks' ? ' (Fiks)' : ' (Menunggu)';
+                    statusText = 'Diterima' + suffix;
+                } else if (adm.status === 'diterima-dirubah') {
+                    const suffix = adm.persetujuan === 'fiks' ? ' (Fiks)' : ' (Menunggu)';
+                    statusText = adm.jabatan + suffix;
+                } else if (adm.status === 'diterima-cadangan') {
+                    statusText = `${adm.jabatan} (Cadangan)`;
+                } else if (adm.status === 'ditolak') {
+                    statusText = 'Ditolak';
+                }
 
                 htmlString += `
                     <div class="applicant-card" data-id="${app.id}">
@@ -631,12 +642,19 @@ document.addEventListener('DOMContentLoaded', () => {
             chunkData.forEach((app, idx) => {
                 const commitClass = app.komitmen >= 8 ? 'commitment-high' : app.komitmen >= 5 ? 'commitment-medium' : 'commitment-low';
                 
-                const adm = processedAdmissions[app.nama] || { status: 'belum', jabatan: '', isCadangan: false };
+                const adm = processedAdmissions[app.nama] || { status: 'belum', jabatan: '', isCadangan: false, persetujuan: 'menunggu' };
                 let statusText = 'Belum';
-                if (adm.status === 'diterima') statusText = 'Diterima';
-                else if (adm.status === 'diterima-dirubah') statusText = `Dirubah: ${adm.jabatan}`;
-                else if (adm.status === 'diterima-cadangan') statusText = `Cadangan: ${adm.jabatan}`;
-                else if (adm.status === 'ditolak') statusText = 'Ditolak';
+                if (adm.status === 'diterima') {
+                    const suffix = adm.persetujuan === 'fiks' ? ' (Fiks)' : ' (Menunggu)';
+                    statusText = 'Diterima' + suffix;
+                } else if (adm.status === 'diterima-dirubah') {
+                    const suffix = adm.persetujuan === 'fiks' ? ' (Fiks)' : ' (Menunggu)';
+                    statusText = `Dirubah: ${adm.jabatan}` + suffix;
+                } else if (adm.status === 'diterima-cadangan') {
+                    statusText = `Cadangan: ${adm.jabatan}`;
+                } else if (adm.status === 'ditolak') {
+                    statusText = 'Ditolak';
+                }
 
                 const rowIdx = currentIndex + idx + 1;
 
@@ -794,13 +812,22 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
         modalHarapan.textContent = app.harapan || 'Tidak dicantumkan.';
 
         // Load selection decision
-        const adm = processedAdmissions[app.nama] || { status: 'belum', jabatan: '', isCadangan: false };
+        const adm = processedAdmissions[app.nama] || { status: 'belum', jabatan: '', isCadangan: false, persetujuan: 'menunggu' };
         currentSelectedStatus = adm.status;
+        currentPersetujuanStatus = adm.persetujuan || 'menunggu';
         
         // Reset active buttons in modal
         document.querySelectorAll('.btn-admit').forEach(btn => {
             btn.classList.remove('active');
             if (btn.dataset.status === currentSelectedStatus) {
+                btn.classList.add('active');
+            }
+        });
+
+        // Reset active persetujuan buttons in modal
+        document.querySelectorAll('.btn-persetujuan').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.persetujuan === currentPersetujuanStatus) {
                 btn.classList.add('active');
             }
         });
@@ -812,6 +839,13 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
         } else {
             newRoleContainer.classList.add('hidden');
             newRoleDropdown.value = '';
+        }
+
+        // Show/hide persetujuan select container
+        if (currentSelectedStatus === 'diterima' || currentSelectedStatus === 'diterima-dirubah') {
+            persetujuanContainer.classList.remove('hidden');
+        } else {
+            persetujuanContainer.classList.add('hidden');
         }
 
         // WhatsApp direct integration
@@ -832,7 +866,8 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
 
             admissions[app.nama] = {
                 status: currentSelectedStatus,
-                jabatan: assignedRole
+                jabatan: assignedRole,
+                persetujuan: (currentSelectedStatus === 'diterima' || currentSelectedStatus === 'diterima-dirubah') ? currentPersetujuanStatus : 'menunggu'
             };
 
             // Save to local storage cache immediately
@@ -854,7 +889,8 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
             const payload = {
                 nama: app.nama,
                 status: currentSelectedStatus,
-                jabatan: assignedRole
+                jabatan: assignedRole,
+                persetujuan: (currentSelectedStatus === 'diterima' || currentSelectedStatus === 'diterima-dirubah') ? currentPersetujuanStatus : 'menunggu'
             };
 
             fetch(appsScriptUrl, {
@@ -1095,11 +1131,32 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
             const card = el.closest('.struktur-slot-card');
  
             if (assignedName) {
-                el.textContent = assignedName;
-                if (card) card.classList.add('filled');
+                const persetujuan = processedAdmissions[assignedName].persetujuan || 'menunggu';
+                if (persetujuan === 'menunggu') {
+                    el.innerHTML = `<i class="fa-solid fa-clock text-amber animate-pulse" style="margin-right: 6px; font-size: 0.85rem;" title="Menunggu Persetujuan"></i>${assignedName}`;
+                    if (card) {
+                        card.classList.add('filled');
+                        card.style.borderStyle = 'dashed';
+                        card.style.borderColor = '#f59e0b';
+                        card.style.background = 'rgba(245, 158, 11, 0.05)';
+                    }
+                } else {
+                    el.innerHTML = `<i class="fa-solid fa-circle-check text-emerald" style="margin-right: 6px; font-size: 0.85rem;" title="Fiks / Setuju"></i>${assignedName}`;
+                    if (card) {
+                        card.classList.add('filled');
+                        card.style.borderStyle = 'solid';
+                        card.style.borderColor = '#10B981';
+                        card.style.background = 'rgba(16, 185, 129, 0.05)';
+                    }
+                }
             } else {
                 el.textContent = 'Belum Terpilih';
-                if (card) card.classList.remove('filled');
+                if (card) {
+                    card.classList.remove('filled');
+                    card.style.borderStyle = '';
+                    card.style.borderColor = '';
+                    card.style.background = '';
+                }
             }
 
             // Cari nama-nama cadangan untuk posisi ini (must be cadangan, i.e., status === 'diterima-cadangan')
@@ -1168,7 +1225,12 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
                 ul.innerHTML = '';
                 members.forEach(name => {
                     const li = document.createElement('li');
-                    li.textContent = name;
+                    const persetujuan = processedAdmissions[name].persetujuan || 'menunggu';
+                    if (persetujuan === 'menunggu') {
+                        li.innerHTML = `<i class="fa-solid fa-clock text-amber animate-pulse" style="margin-right: 6px;"></i>${name}`;
+                    } else {
+                        li.innerHTML = `<i class="fa-solid fa-circle-check text-emerald" style="margin-right: 6px;"></i>${name}`;
+                    }
                     // Add click handler to open details
                     li.addEventListener('click', (e) => {
                         e.stopPropagation(); // Prevent card bubble click
@@ -1231,6 +1293,12 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
                 newRoleDropdown.value = '';
             }
 
+            if (currentSelectedStatus === 'diterima' || currentSelectedStatus === 'diterima-dirubah') {
+                persetujuanContainer.classList.remove('hidden');
+            } else {
+                persetujuanContainer.classList.add('hidden');
+            }
+
             // Update WhatsApp link immediately when decision changes
             updateModalWhatsappLink();
         });
@@ -1239,6 +1307,17 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
     // Update WhatsApp link immediately when newly assigned role is selected
     newRoleDropdown.addEventListener('change', () => {
         updateModalWhatsappLink();
+    });
+
+    // Persetujuan selector buttons inside modal
+    document.querySelectorAll('.btn-persetujuan').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const clickedBtn = e.target.closest('.btn-persetujuan');
+            if (!clickedBtn) return;
+            document.querySelectorAll('.btn-persetujuan').forEach(b => b.classList.remove('active'));
+            clickedBtn.classList.add('active');
+            currentPersetujuanStatus = clickedBtn.dataset.persetujuan;
+        });
     });
 
     // Delegasi penanganan klik untuk kartu pengurus terpilih di organogram

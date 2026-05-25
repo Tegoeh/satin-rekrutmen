@@ -470,6 +470,18 @@
                         </select>
                     </div>
 
+                    <div class="persetujuan-select-box hidden" id="persetujuan-container">
+                        <label><i class="fa-solid fa-circle-check text-blue"></i> Status Konfirmasi BPH / Pengurus:</label>
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" class="btn-persetujuan" data-persetujuan="menunggu" style="flex: 1;">
+                                <i class="fa-solid fa-clock"></i> Menunggu Persetujuan
+                            </button>
+                            <button type="button" class="btn-persetujuan" data-persetujuan="fiks" style="flex: 1;">
+                                <i class="fa-solid fa-circle-check"></i> Fiks / Diterima
+                            </button>
+                        </div>
+                    </div>
+
                     <button class="btn btn-sync mt-3" id="btn-save-decision" style="width: 100%; justify-content: center; margin-top: 12px;">
                         <i class="fa-solid fa-floppy-disk"></i> Simpan Keputusan Seleksi
                     </button>
