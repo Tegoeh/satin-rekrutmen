@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const newRoleContainer = document.getElementById('new-role-container');
     const newRoleDropdown = document.getElementById('new-role-dropdown');
     let currentSelectedStatus = 'belum'; // Temp BPH decision state
+    let activeApplicant = null; // Currently opened applicant in detail modal
 
     // AI Formatur Assistant DOM Elements
     const aiPasswordModal = document.getElementById('ai-password-modal');
@@ -692,9 +693,85 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- MODAL UTILITIES ---
+    // --- WHATSAPP DYNAMIC MESSAGING ---
+    const updateModalWhatsappLink = () => {
+        if (!activeApplicant) return;
+
+        const BPH_ROLES = [
+            'Ketua Umum',
+            'Wakil Ketua I',
+            'Wakil Ketua II',
+            'Wakil Ketua Umum',
+            'Sekretaris I',
+            'Sekretaris II',
+            'Bendahara I',
+            'Bendahara II'
+        ];
+
+        let currentJabatan = '';
+        const adm = processedAdmissions[activeApplicant.nama] || { status: 'belum', jabatan: '', isCadangan: false };
+        
+        if (currentSelectedStatus === 'diterima') {
+            currentJabatan = activeApplicant.pilihan1;
+        } else if (currentSelectedStatus === 'diterima-dirubah' || currentSelectedStatus === 'diterima-cadangan') {
+            currentJabatan = newRoleDropdown.value || adm.jabatan || '';
+        }
+
+        const isBph = BPH_ROLES.includes(currentJabatan);
+        let msg = '';
+
+        if (currentSelectedStatus === 'diterima' || currentSelectedStatus === 'diterima-dirubah') {
+            if (currentJabatan) {
+                if (isBph) {
+                    msg = `Halo ${activeApplicant.nama}!
+
+Mau infoin nih terkait kelanjutan rekrutmen pengurus SATIN 2026/2027. Dari hasil pertimbangan formatur, kamu ditetapkan di posisi *${currentJabatan}* (BPH).
+
+Kira-kira kamu siap dan berkomitmen buat ngemban amanah ini nggak? Atau ada kendala/hal lain yang mau didiskusikan dulu?`;
+                } else {
+                    msg = `Halo ${activeApplicant.nama}!
+
+Mau infoin nih terkait kelanjutan rekrutmen pengurus SATIN 2026/2027. Dari hasil pertimbangan formatur, kamu ditetapkan di posisi *${currentJabatan}*.
+
+Kira-kira kamu siap dan berkomitmen buat ngemban amanah ini nggak? Atau ada kendala/hal lain yang mau didiskusikan dulu?`;
+                }
+            } else {
+                msg = `Halo ${activeApplicant.nama}!
+
+Mau infoin nih terkait kelanjutan rekrutmen pengurus SATIN 2026/2027. Dari hasil pertimbangan formatur, kamu ditetapkan dalam kepengurusan SATIN.
+
+Kira-kira kamu siap dan berkomitmen buat ngemban amanah ini nggak? Atau ada kendala/hal lain yang mau didiskusikan dulu?`;
+            }
+        } else if (currentSelectedStatus === 'diterima-cadangan') {
+            const jabatanText = currentJabatan ? `posisi *${currentJabatan} (Cadangan)*` : 'kepengurusan SATIN sebagai cadangan';
+            msg = `Halo ${activeApplicant.nama}!
+
+Mau infoin nih terkait kelanjutan rekrutmen pengurus SATIN 2026/2027. Dari hasil pertimbangan formatur, kamu ditetapkan di ${jabatanText}.
+
+Kira-kira kamu siap dan berkomitmen nggak kalau sewaktu-waktu didelegasikan di posisi ini? Atau ada kendala yang mau didiskusikan dulu?`;
+        } else if (currentSelectedStatus === 'ditolak') {
+            msg = `Halo ${activeApplicant.nama}!
+
+Mau infoin nih terkait hasil seleksi rekrutmen pengurus SATIN 2026/2027. Setelah pertimbangan dari formatur, mohon maaf banget ya saat ini kamu belum bisa bergabung di kepengurusan periode ini. 🙏
+
+Makasih banyak buat antusiasme dan partisipasimu selama proses seleksi. Tetap semangat berkarya dan sukses selalu buat kamu ya! ✨`;
+        } else {
+            // status: belum
+            msg = `Halo ${activeApplicant.nama}!
+
+Mau infoin nih terkait pendaftaranmu di rekrutmen pengurus SATIN 2026/2027. Kami tertarik banget sama profilmu di posisi *${activeApplicant.pilihan1}*.
+
+Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara singkat secara online?`;
+        }
+
+        modalWhatsappLink.href = `https://wa.me/62${activeApplicant.whatsapp.slice(1)}?text=${encodeURIComponent(msg)}`;
+    };
+
     const openApplicantDetail = (id) => {
         const app = applicants.find(a => a.id === id);
         if (!app) return;
+
+        activeApplicant = app;
 
         const initials = app.nama.split(' ').map(p => p.charAt(0)).slice(0, 2).join('').toUpperCase();
         const commitClass = app.komitmen >= 8 ? 'commitment-high' : app.komitmen >= 5 ? 'commitment-medium' : 'commitment-low';
@@ -738,8 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // WhatsApp direct integration
-        const msg = `Halo ${app.nama}, terima kasih sudah mendaftar dalam Rekrutmen Pengurus SATIN 2026/2027. Kami tertarik dengan profil Anda pada posisi ${app.pilihan1}. Bisakah kita menjadwalkan wawancara singkat?`;
-        modalWhatsappLink.href = `https://wa.me/62${app.whatsapp.slice(1)}?text=${encodeURIComponent(msg)}`;
+        updateModalWhatsappLink();
 
         // Attach click listener for save button
         btnSaveDecision.onclick = () => {
@@ -1154,7 +1230,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 newRoleContainer.classList.add('hidden');
                 newRoleDropdown.value = '';
             }
+
+            // Update WhatsApp link immediately when decision changes
+            updateModalWhatsappLink();
         });
+    });
+
+    // Update WhatsApp link immediately when newly assigned role is selected
+    newRoleDropdown.addEventListener('change', () => {
+        updateModalWhatsappLink();
     });
 
     // Delegasi penanganan klik untuk kartu pengurus terpilih di organogram
