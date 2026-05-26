@@ -25,12 +25,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Pack Pages
-        run: tar -czf github-pages.tar.gz -C . --exclude=github-pages.tar.gz .
+        run: tar -czf /tmp/github-pages.tar.gz -C . .
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: github-pages
-          path: github-pages.tar.gz
+          path: /tmp/github-pages.tar.gz
           retention-days: 1
       - name: Deploy to GitHub Pages
         id: deployment
