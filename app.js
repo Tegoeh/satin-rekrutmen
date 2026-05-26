@@ -867,7 +867,7 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
             admissions[app.nama] = {
                 status: currentSelectedStatus,
                 jabatan: assignedRole,
-                persetujuan: (currentSelectedStatus === 'diterima' || currentSelectedStatus === 'diterima-dirubah') ? currentPersetujuanStatus : 'menunggu'
+                persetujuan: currentPersetujuanStatus
             };
 
             // Save to local storage cache immediately
@@ -890,7 +890,7 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
                 nama: app.nama,
                 status: currentSelectedStatus,
                 jabatan: assignedRole,
-                persetujuan: (currentSelectedStatus === 'diterima' || currentSelectedStatus === 'diterima-dirubah') ? currentPersetujuanStatus : 'menunggu'
+                persetujuan: currentPersetujuanStatus
             };
 
             fetch(appsScriptUrl, {
