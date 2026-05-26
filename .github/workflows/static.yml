@@ -24,14 +24,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Pack Pages
-        run: tar -czf /tmp/github-pages.tar.gz -C . .
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: github-pages
-          path: /tmp/github-pages.tar.gz
-          retention-days: 1
+          # Upload entire repository
+          path: '.'
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
