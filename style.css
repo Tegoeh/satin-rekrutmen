@@ -531,10 +531,9 @@ h1, h2, h3, h4 {
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 2px;
+  white-space: normal;
+  word-break: break-word;
+  margin-bottom: 4px;
 }
 
 .applicant-title-info p {
@@ -1372,15 +1371,17 @@ h1, h2, h3, h4 {
 }
 
 .card-status-pill {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.7rem;
   font-weight: 800;
-  padding: 6px 10px;
+  padding: 4px 8px;
   border-radius: 6px;
   text-transform: uppercase;
-  white-space: nowrap;
-  flex-shrink: 0;
-  align-self: center;
-  margin-left: auto;
+  white-space: normal;
+  word-break: break-word;
+  margin-top: 6px;
+  width: fit-content;
 }
 
 .card-status-pill.belum {

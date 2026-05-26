@@ -580,8 +580,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="applicant-title-info">
                                 <h4>${app.nama}</h4>
                                 <p><i class="fa-solid fa-graduation-cap"></i> ${app.sekolah}</p>
+                                <span class="card-status-pill ${adm.status}">${statusText}</span>
                             </div>
-                            <span class="card-status-pill ${adm.status}">${statusText}</span>
                         </div>
                         <div class="card-body">
                             <div class="position-badges-card">
