@@ -1372,14 +1372,15 @@ h1, h2, h3, h4 {
 }
 
 .card-status-pill {
-  position: absolute;
-  top: 24px;
-  right: 24px;
   font-size: 0.7rem;
   font-weight: 800;
-  padding: 4px 8px;
+  padding: 6px 10px;
   border-radius: 6px;
   text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: center;
+  margin-left: auto;
 }
 
 .card-status-pill.belum {

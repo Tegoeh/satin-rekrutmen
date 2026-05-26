@@ -575,13 +575,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 htmlString += `
                     <div class="applicant-card" data-id="${app.id}">
-                        <span class="card-status-pill ${adm.status}">${statusText}</span>
                         <div class="card-header">
                             <div class="applicant-avatar">${initials}</div>
                             <div class="applicant-title-info">
                                 <h4>${app.nama}</h4>
                                 <p><i class="fa-solid fa-graduation-cap"></i> ${app.sekolah}</p>
                             </div>
+                            <span class="card-status-pill ${adm.status}">${statusText}</span>
                         </div>
                         <div class="card-body">
                             <div class="position-badges-card">
