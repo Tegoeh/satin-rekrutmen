@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastApplicantsStr = '';
     let lastAdmissionsStr = '';
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9z00JrLv9Molf8m4AiByB4ZMPzkb3nOgMnWoez06vSRe8VSuSRTKzIClqfnyGnHXXAAjtZDKs4izE/pub?gid=643422287&single=true&output=csv';
-    const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbzmv_C2ZNarXxP0_VfQaed_ch3rt02gDuxSwxTd-BX3p037XXJXr43mI3U_bPq0Qppg-g/exec';
+    const appsScriptUrl = 'https://script.google.com/macros/s/AKfycby9tWzvRF3IFXivWyTyz75E5gwgBE3WO2_IJc9f8asSdCe3HayOTQo2UcM9PG4vB1AIug/exec';
 
     // --- DOM ELEMENTS ---
     const btnRefresh = document.getElementById('btn-refresh');
