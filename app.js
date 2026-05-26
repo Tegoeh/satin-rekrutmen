@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('search-input');
     const filterPosisi = document.getElementById('filter-posisi');
     const filterSekolah = document.getElementById('filter-sekolah');
+    const filterWilayah = document.getElementById('filter-wilayah');
     const sortSelect = document.getElementById('sort-select');
 
     const viewGridBtn = document.getElementById('view-grid');
@@ -493,17 +494,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const getWilayahFromAlamat = (alamat) => {
+        if (!alamat) return 'Lainnya';
+        const clean = alamat.toLowerCase();
+        if (clean.includes('pekutatan')) return 'Pekutatan';
+        if (clean.includes('mendoyo')) return 'Mendoyo';
+        if (clean.includes('negara')) return 'Negara';
+        if (clean.includes('melaya')) return 'Melaya';
+        if (clean.includes('jembrana')) return 'Jembrana';
+        return 'Lainnya';
+    };
+
     const getFilteredData = () => {
         const search = searchInput.value.toLowerCase().trim();
         const posisi = filterPosisi.value;
         const sekolah = filterSekolah.value;
+        const wilayah = filterWilayah.value;
         const urutan = sortSelect.value;
 
         let filtered = applicants.filter(app => {
             const matchSearch = app.nama.toLowerCase().includes(search) || app.sekolah.toLowerCase().includes(search);
             const matchPosisi = posisi === 'all' || app.pilihan1 === posisi;
             const matchSekolah = sekolah === 'all' || app.sekolah === sekolah;
-            return matchSearch && matchPosisi && matchSekolah;
+            
+            const appWilayah = getWilayahFromAlamat(app.alamat);
+            const matchWilayah = wilayah === 'all' || appWilayah === wilayah;
+            
+            return matchSearch && matchPosisi && matchSekolah && matchWilayah;
         });
 
         // Sorting
@@ -922,6 +939,7 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
     searchInput.addEventListener('input', handleFilterChange);
     filterPosisi.addEventListener('change', handleFilterChange);
     filterSekolah.addEventListener('change', handleFilterChange);
+    filterWilayah.addEventListener('change', handleFilterChange);
     sortSelect.addEventListener('change', handleFilterChange);
 
     viewGridBtn.addEventListener('click', () => {
