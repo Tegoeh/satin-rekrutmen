@@ -923,15 +923,17 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
 
             fetch(appsScriptUrl, {
                 method: 'POST',
-                mode: 'no-cors', // Completely bypasses browser CORS preflight check
+                mode: 'no-cors',
                 headers: {
                     'Content-Type': 'text/plain'
                 },
                 body: JSON.stringify(payload)
             }).then(() => {
                 console.log(`Database terpusat berhasil diperbarui untuk: ${app.nama}`);
+                setTimeout(() => fetchData(true), 2000);
             }).catch(err => {
                 console.error('Gagal memperbarui database terpusat Google Sheets:', err);
+                alert('Peringatan: Data tersimpan di browser lokal tetapi gagal sinkron ke database pusat. Perubahan mungkin hilang jika browser dihapus. Pastikan koneksi internet stabil.');
             });
         };
 
@@ -1329,6 +1331,9 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
                 persetujuanContainer.classList.remove('hidden');
             } else {
                 persetujuanContainer.classList.add('hidden');
+                currentPersetujuanStatus = 'menunggu';
+                document.querySelectorAll('.btn-persetujuan').forEach(b => b.classList.remove('active'));
+                document.querySelector('.btn-persetujuan[data-persetujuan="menunggu"]')?.classList.add('active');
             }
 
             // Update WhatsApp link immediately when decision changes
