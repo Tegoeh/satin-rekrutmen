@@ -124,6 +124,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return lines;
     };
 
+    // --- HTML ESCAPE UTILITY (XSS Prevention) ---
+    const escapeHtml = (str) => {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    };
+
     // --- DATA CLEANING FUNCTIONS (Matching Python backend standard) ---
     const cleanName = (name) => {
         if (!name) return "";
@@ -566,9 +577,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     statusText = 'Diterima' + suffix;
                 } else if (adm.status === 'diterima-dirubah') {
                     const suffix = adm.persetujuan === 'fiks' ? ' (Fiks)' : ' (Menunggu)';
-                    statusText = adm.jabatan + suffix;
+                    statusText = escapeHtml(adm.jabatan) + suffix;
                 } else if (adm.status === 'diterima-cadangan') {
-                    statusText = `${adm.jabatan} (Cadangan)`;
+                    statusText = `${escapeHtml(adm.jabatan)} (Cadangan)`;
                 } else if (adm.status === 'ditolak') {
                     statusText = 'Ditolak';
                 }
@@ -576,10 +587,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 htmlString += `
                     <div class="applicant-card" data-id="${app.id}">
                         <div class="card-header">
-                            <div class="applicant-avatar">${initials}</div>
+                            <div class="applicant-avatar">${escapeHtml(initials)}</div>
                             <div class="applicant-title-info">
-                                <h4>${app.nama}</h4>
-                                <p><i class="fa-solid fa-graduation-cap"></i> ${app.sekolah}</p>
+                                <h4>${escapeHtml(app.nama)}</h4>
+                                <p><i class="fa-solid fa-graduation-cap"></i> ${escapeHtml(app.sekolah)}</p>
                                 <span class="card-status-pill ${adm.status}">${statusText}</span>
                             </div>
                         </div>
@@ -587,11 +598,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="position-badges-card">
                                 <div class="card-badge-line">
                                     <span class="label-num label-num-1">1</span>
-                                    <span class="position-text">${app.pilihan1}</span>
+                                    <span class="position-text">${escapeHtml(app.pilihan1)}</span>
                                 </div>
                                 <div class="card-badge-line">
                                     <span class="label-num label-num-2">2</span>
-                                    <span class="position-text">${app.pilihan2 || '-'}</span>
+                                    <span class="position-text">${escapeHtml(app.pilihan2) || '-'}</span>
                                 </div>
                             </div>
                             <div class="commitment-scale-block">
@@ -605,7 +616,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
                         <div class="card-footer">
-                            <span class="timestamp"><i class="fa-regular fa-clock" style="margin-right: 4px;"></i>${formatTimestamp(app.timestamp)}</span>
+                            <span class="timestamp"><i class="fa-regular fa-clock" style="margin-right: 4px;"></i>${escapeHtml(formatTimestamp(app.timestamp))}</span>
                             <button class="btn btn-detail" data-id="${app.id}">Detail Profil</button>
                         </div>
                     </div>
@@ -666,9 +677,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     statusText = 'Diterima' + suffix;
                 } else if (adm.status === 'diterima-dirubah') {
                     const suffix = adm.persetujuan === 'fiks' ? ' (Fiks)' : ' (Menunggu)';
-                    statusText = `Dirubah: ${adm.jabatan}` + suffix;
+                    statusText = `Dirubah: ${escapeHtml(adm.jabatan)}` + suffix;
                 } else if (adm.status === 'diterima-cadangan') {
-                    statusText = `Cadangan: ${adm.jabatan}`;
+                    statusText = `Cadangan: ${escapeHtml(adm.jabatan)}`;
                 } else if (adm.status === 'ditolak') {
                     statusText = 'Ditolak';
                 }
@@ -679,15 +690,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <tr class="table-row-item" data-id="${app.id}">
                         <td>${rowIdx}</td>
                         <td class="table-nama-cell">
-                            <div class="table-nama-text">${app.nama}</div>
-                            <div class="table-timestamp-sub"><i class="fa-regular fa-clock" style="margin-right: 4px;"></i>${formatTimestamp(app.timestamp)}</div>
+                            <div class="table-nama-text">${escapeHtml(app.nama)}</div>
+                            <div class="table-timestamp-sub"><i class="fa-regular fa-clock" style="margin-right: 4px;"></i>${escapeHtml(formatTimestamp(app.timestamp))}</div>
                         </td>
-                        <td>${app.sekolah}</td>
-                        <td><span class="badge-position pilihan1">${app.pilihan1}</span></td>
-                        <td><span class="badge-position">${app.pilihan2 || '-'}</span></td>
+                        <td>${escapeHtml(app.sekolah)}</td>
+                        <td><span class="badge-position pilihan1">${escapeHtml(app.pilihan1)}</span></td>
+                        <td><span class="badge-position">${escapeHtml(app.pilihan2) || '-'}</span></td>
                         <td>
                             <a href="https://wa.me/62${app.whatsapp.slice(1)}" target="_blank" class="table-whatsapp-link">
-                                <i class="fa-brands fa-whatsapp"></i> ${app.whatsapp}
+                                <i class="fa-brands fa-whatsapp"></i> ${escapeHtml(app.whatsapp)}
                             </a>
                         </td>
                         <td>
@@ -813,7 +824,7 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
 
         modalAvatar.textContent = initials;
         modalNama.textContent = app.nama;
-        modalSekolah.innerHTML = `<i class="fa-solid fa-graduation-cap"></i> ${app.sekolah}`;
+        modalSekolah.innerHTML = `<i class="fa-solid fa-graduation-cap"></i> ${escapeHtml(app.sekolah)}`;
         modalPhone.textContent = app.whatsapp;
         modalEmail.textContent = app.email;
         modalAlamat.textContent = app.alamat;
@@ -1300,9 +1311,10 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
     // BPH selector buttons inside modal
     document.querySelectorAll('.btn-admit').forEach(btn => {
         btn.addEventListener('click', (e) => {
+            const clickedBtn = e.currentTarget;
             document.querySelectorAll('.btn-admit').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            currentSelectedStatus = e.target.dataset.status;
+            clickedBtn.classList.add('active');
+            currentSelectedStatus = clickedBtn.dataset.status;
             
             if (currentSelectedStatus === 'diterima-dirubah' || currentSelectedStatus === 'diterima-cadangan') {
                 newRoleContainer.classList.remove('hidden');

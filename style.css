@@ -1343,6 +1343,13 @@ h1, h2, h3, h4 {
   box-shadow: 0 0 10px rgba(37, 99, 235, 0.15);
 }
 
+.btn-admit[data-status="diterima-cadangan"].active {
+  background: rgba(245, 158, 11, 0.15);
+  color: #F59E0B;
+  border-color: #F59E0B;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.15);
+}
+
 .btn-admit[data-status="ditolak"].active {
   background: rgba(239, 68, 68, 0.15);
   color: #EF4444;
@@ -1400,6 +1407,12 @@ h1, h2, h3, h4 {
   border: 1px solid rgba(37, 99, 235, 0.25);
 }
 
+.card-status-pill.diterima-cadangan {
+  background: rgba(245, 158, 11, 0.15);
+  color: #F59E0B;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
 .card-status-pill.ditolak {
   background: rgba(239, 68, 68, 0.15);
   color: #EF4444;
@@ -1432,6 +1445,11 @@ h1, h2, h3, h4 {
 .table-status-badge.diterima-dirubah {
   background: rgba(37, 99, 235, 0.12);
   color: var(--secondary-light);
+}
+
+.table-status-badge.diterima-cadangan {
+  background: rgba(245, 158, 11, 0.12);
+  color: #F59E0B;
 }
 
 .table-status-badge.ditolak {
