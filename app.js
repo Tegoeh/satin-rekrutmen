@@ -1133,8 +1133,8 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
             'slot-koor-bidang-organisasi': ['Koor. Bidang Organisasi'],
             'slot-koor-bidang-pengabdian-masyarakat': ['Koor. Bidang Pengabdian Masyarakat'],
             'slot-koor-bidang-humas': ['Koor. Bidang Humas'],
-            'slot-koor-bidang-penggalian-dana': ['Koor. Bidang Pengembangan Diri'],
-            'slot-koor-bidang-penggalihan-dana': ['Koor. Bidang Penggalian Dana'],
+            'slot-koor-bidang-pengembangan-diri': ['Koor. Bidang Pengembangan Diri'],
+            'slot-koor-bidang-penggalian-dana': ['Koor. Bidang Penggalian Dana'],
             'slot-koor-wilayah-pekutatan': ['Koor. Wilayah Pekutatan'],
             'slot-koor-wilayah-jembrana': ['Koor. Wilayah Jembrana'],
             'slot-koor-wilayah-negara': ['Koor. Wilayah Negara'],
@@ -1160,9 +1160,10 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
             const card = el.closest('.struktur-slot-card');
  
             if (assignedName) {
+                el.dataset.name = assignedName;
                 const persetujuan = processedAdmissions[assignedName].persetujuan || 'menunggu';
                 if (persetujuan === 'menunggu') {
-                    el.innerHTML = `<i class="fa-solid fa-clock text-amber animate-pulse" style="margin-right: 6px; font-size: 0.85rem;" title="Menunggu Persetujuan"></i>${assignedName}`;
+                    el.innerHTML = `<i class="fa-solid fa-clock text-amber animate-pulse" style="margin-right: 6px; font-size: 0.85rem;" title="Menunggu Persetujuan"></i>${escapeHtml(assignedName)}`;
                     if (card) {
                         card.classList.add('filled');
                         card.style.borderStyle = 'dashed';
@@ -1170,7 +1171,7 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
                         card.style.background = 'rgba(245, 158, 11, 0.05)';
                     }
                 } else {
-                    el.innerHTML = `<i class="fa-solid fa-circle-check text-emerald" style="margin-right: 6px; font-size: 0.85rem;" title="Fiks / Setuju"></i>${assignedName}`;
+                    el.innerHTML = `<i class="fa-solid fa-circle-check text-emerald" style="margin-right: 6px; font-size: 0.85rem;" title="Fiks / Setuju"></i>${escapeHtml(assignedName)}`;
                     if (card) {
                         card.classList.add('filled');
                         card.style.borderStyle = 'solid';
@@ -1179,6 +1180,7 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
                     }
                 }
             } else {
+                delete el.dataset.name;
                 el.textContent = 'Belum Terpilih';
                 if (card) {
                     card.classList.remove('filled');
@@ -1204,7 +1206,7 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
             }
 
             if (reserveNames.length > 0) {
-                cadanganEl.innerHTML = reserveNames.map(name => `<span class="cadangan-pill"><i class="fa-solid fa-user-clock"></i> Cadangan: ${name}</span>`).join('');
+                cadanganEl.innerHTML = reserveNames.map(name => `<span class="cadangan-pill"><i class="fa-solid fa-user-clock"></i> Cadangan: ${escapeHtml(name)}</span>`).join('');
                 cadanganEl.classList.remove('hidden');
                 
                 // Tambahkan click listener untuk membuka profil pendaftar cadangan
@@ -1256,9 +1258,9 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
                     const li = document.createElement('li');
                     const persetujuan = processedAdmissions[name].persetujuan || 'menunggu';
                     if (persetujuan === 'menunggu') {
-                        li.innerHTML = `<i class="fa-solid fa-clock text-amber animate-pulse" style="margin-right: 6px;"></i>${name}`;
+                        li.innerHTML = `<i class="fa-solid fa-clock text-amber animate-pulse" style="margin-right: 6px;"></i>${escapeHtml(name)}`;
                     } else {
-                        li.innerHTML = `<i class="fa-solid fa-circle-check text-emerald" style="margin-right: 6px;"></i>${name}`;
+                        li.innerHTML = `<i class="fa-solid fa-circle-check text-emerald" style="margin-right: 6px;"></i>${escapeHtml(name)}`;
                     }
                     // Add click handler to open details
                     li.addEventListener('click', (e) => {
@@ -1353,10 +1355,9 @@ Kira-kira minggu ini ada waktu luang nggak ya buat kita jadwalkan wawancara sing
     // Delegasi penanganan klik untuk kartu pengurus terpilih di organogram
     document.querySelectorAll('.struktur-slot-card').forEach(card => {
         card.addEventListener('click', () => {
-            const h4 = card.querySelector('h4');
-            if (!h4) return;
-            const name = h4.textContent.trim();
-            if (name && name !== 'Belum Terpilih') {
+            const slot = card.querySelector('[data-name]');
+            const name = slot ? slot.dataset.name : null;
+            if (name) {
                 const app = applicants.find(a => a.nama === name);
                 if (app) {
                     openApplicantDetail(app.id);
